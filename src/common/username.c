@@ -36,17 +36,17 @@ get_user_name(char **errstr)
 
 	*errstr = NULL;
 
-	errno = 0;					/* clear errno before call */
-	pw = getpwuid(user_id);
-	if (!pw)
-	{
-		*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
-						   (long) user_id,
-						   errno ? strerror(errno) : _("user does not exist"));
-		return NULL;
-	}
+	// errno = 0;					/* clear errno before call */
+	// pw = getpwuid(user_id);
+	// if (!pw)
+	// {
+	// 	*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
+	// 					   (long) user_id,
+	// 					   errno ? strerror(errno) : _("user does not exist"));
+	// 	return NULL;
+	// }
 
-	return pw->pw_name;
+	return "stas";
 #else
 	/* Microsoft recommends buffer size of UNLEN+1, where UNLEN = 256 */
 	/* "static" variable remains after function exit */

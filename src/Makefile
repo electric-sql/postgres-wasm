@@ -17,15 +17,11 @@ SUBDIRS = \
 	port \
 	timezone \
 	backend \
-	backend/utils/mb/conversion_procs \
-	backend/snowball \
 	include \
-	interfaces \
-	backend/replication/libpqwalreceiver \
-	backend/replication/pgoutput \
-	fe_utils \
-	bin \
-	pl \
+	interfaces
+#	fe_utils 
+#	bin
+#	pl \
 	makefiles \
 	test/regress \
 	test/isolation \

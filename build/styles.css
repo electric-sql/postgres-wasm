@@ -1,0 +1,65 @@
+html, body {
+    background-color: #000;
+    margin: 20px;
+}
+
+* {
+    font-family: 'Fira Code', monospace;
+}
+
+#console {
+    position: relative;
+    display: inline-block;
+    line-height: 18px;
+    font-size: 18px;
+    color: #D4A989;
+}
+
+.prompt, .body {
+    display: inline-block;
+}
+
+.body {
+    overflow-wrap: anywhere;
+}
+
+.console-line {
+    margin-bottom: 5px;
+}
+
+.console-line.active .body::after {
+  content: "";
+  display: inline-block;
+  background-color: #826a57;
+  vertical-align: bottom;
+  position: relative;
+  left: 1px;
+  width: 10px;
+  /* Set height to the line height of .text */
+  height: 18px;
+  -webkit-animation: blink 1s step-end infinite;
+  animation: blink 1s step-end infinite;
+}
+
+@-webkit-keyframes blink {
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+
+@keyframes blink {
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+
+.stdout {
+    color: #B9A08E;
+    margin: 0 0 10px 0;
+    line-height: 1.2em;
+    overflow-wrap: anywhere;
+}
+
+#console a {
+    color: #B9A08E;
+}

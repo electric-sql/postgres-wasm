@@ -4000,9 +4000,13 @@ planstate_tree_walker(PlanState *planstate,
 	/* Guard against stack overflow due to overly complex plan trees */
 	check_stack_depth();
 
+	printf("planstate_tree_walker1\n");
+
 	/* initPlan-s */
 	if (planstate_walk_subplans(planstate->initPlan, walker, context))
 		return true;
+
+	printf("planstate_tree_walker2\n");
 
 	/* lefttree */
 	if (outerPlanState(planstate))
@@ -4011,12 +4015,16 @@ planstate_tree_walker(PlanState *planstate,
 			return true;
 	}
 
+	printf("planstate_tree_walker3\n");
+
 	/* righttree */
 	if (innerPlanState(planstate))
 	{
 		if (walker(innerPlanState(planstate), context))
 			return true;
 	}
+
+	printf("planstate_tree_walker4\n");
 
 	/* special child plans */
 	switch (nodeTag(plan))

@@ -32,4 +32,12 @@ extern void spi_dest_startup(DestReceiver *self, int operation,
 							 TupleDesc typeinfo);
 extern bool spi_printtup(TupleTableSlot *slot, DestReceiver *self);
 
+/* print tuples */
+
+extern bool debugtup_json(TupleTableSlot *slot, DestReceiver *self);
+
+extern void debugtup_json_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
+
+extern void debugtup_json_shutdown(DestReceiver *self);
+
 #endif							/* PRINTTUP_H */

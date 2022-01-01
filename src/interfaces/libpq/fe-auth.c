@@ -1132,21 +1132,22 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 						  libpq_gettext("user name lookup failure: error code %lu\n"),
 						  GetLastError());
 #else
-	pwerr = pqGetpwuid(user_id, &pwdstr, pwdbuf, sizeof(pwdbuf), &pw);
-	if (pw != NULL)
-		name = pw->pw_name;
-	else if (errorMessage)
-	{
-		if (pwerr != 0)
-			appendPQExpBuffer(errorMessage,
-							  libpq_gettext("could not look up local user ID %d: %s\n"),
-							  (int) user_id,
-							  strerror_r(pwerr, pwdbuf, sizeof(pwdbuf)));
-		else
-			appendPQExpBuffer(errorMessage,
-							  libpq_gettext("local user with ID %d does not exist\n"),
-							  (int) user_id);
-	}
+	// pwerr = pqGetpwuid(user_id, &pwdstr, pwdbuf, sizeof(pwdbuf), &pw);
+	// if (pw != NULL)
+	// 	name = pw->pw_name;
+	name = "stas";
+	// if (errorMessage)
+	// {
+	// 	if (pwerr != 0)
+	// 		appendPQExpBuffer(errorMessage,
+	// 						  libpq_gettext("could not look up local user ID %d: %s\n"),
+	// 						  (int) user_id,
+	// 						  strerror_r(pwerr, pwdbuf, sizeof(pwdbuf)));
+	// 	else
+	// 		appendPQExpBuffer(errorMessage,
+	// 						  libpq_gettext("local user with ID %d does not exist\n"),
+	// 						  (int) user_id);
+	// }
 #endif
 
 	if (name)

@@ -1501,22 +1501,22 @@ getInstallationPaths(const char *argv0)
 	 */
 	get_pkglib_path(my_exec_path, pkglib_path);
 
-	/*
-	 * Verify that there's a readable directory there; otherwise the Postgres
-	 * installation is incomplete or corrupt.  (A typical cause of this
-	 * failure is that the postgres executable has been moved or hardlinked to
-	 * some directory that's not a sibling of the installation lib/
-	 * directory.)
-	 */
-	pdir = AllocateDir(pkglib_path);
-	if (pdir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						pkglib_path),
-				 errhint("This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location.",
-						 my_exec_path)));
-	FreeDir(pdir);
+	// /*
+	//  * Verify that there's a readable directory there; otherwise the Postgres
+	//  * installation is incomplete or corrupt.  (A typical cause of this
+	//  * failure is that the postgres executable has been moved or hardlinked to
+	//  * some directory that's not a sibling of the installation lib/
+	//  * directory.)
+	//  */
+	// pdir = AllocateDir(pkglib_path);
+	// if (pdir == NULL)
+	// 	ereport(ERROR,
+	// 			(errcode_for_file_access(),
+	// 			 errmsg("could not open directory \"%s\": %m",
+	// 					pkglib_path),
+	// 			 errhint("This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location.",
+	// 					 my_exec_path)));
+	// FreeDir(pdir);
 
 	/*
 	 * XXX is it worth similarly checking the share/ directory?  If the lib/

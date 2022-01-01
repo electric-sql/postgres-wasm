@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<title>zenith</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div id="console">
+        <div class="console-line">
+            <!-- <p>
+                Zenith is building open-source cloud-native PostgreSQL.<br /><br />
+                Our architecture separates storage from compute,<br />
+                allowing for stateless and serverless Postgres.<br /><br />
+                We’re a well funded startup with deep knowledge of<br />
+                Postgres internals and decades of experience building<br />
+                distributed systems.<br /><br />
+                To learn more, please take a look at our <a href="https://github.com/zenithdb" target="_blank">GitHub</a>.<br/><br />
+                For information on oppurtunities at Zenith, read jobs.txt.
+            </p> -->
+        </div>
+        <div class="console-line active">
+            <div class="prompt">zenith &rsaquo;</div>
+            <div class="body"></div>
+        </div>
+    </div>
+
+    <!-- <input id="query_field" type="text"></input>
+    <button id="run_btn">run</button> -->
+
+    <script type='text/javascript'>
+        // var run_btn = document.getElementById('run_btn');
+        // var query_field = document.getElementById('query_field');
+  
+        // window.addEventListener('pg_wasm_result', (e) => {
+        //     alert(e.detail.result);
+        // });
+  
+        // run_btn.onclick = (e) => {
+        //   var event = new CustomEvent("pg_wasm_query", {
+        //     detail: {
+        //       query: query_field.value
+        //     }
+        //   });
+        //   window.dispatchEvent(event);
+        // };
+
+        var Module = {
+          preRun: [],
+          postRun: [],
+          arguments: ['--single','-F','-O','-j','-c','search_path=pg_catalog','-c','dynamic_shared_memory_type=mmap','-d','0','-D','/Users/stas/datadir','template1'],
+          print: (function() {
+            return function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.error(text);
+            };
+          })(),
+          printErr: function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.error(text);
+          },
+          setStatus: function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.error("Set status:" + text);
+          },
+          totalDependencies: 0,
+          monitorRunDependencies: function(left) {
+            this.totalDependencies = Math.max(this.totalDependencies, left);
+            Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+          }
+        };
+
+
+        Module.setStatus('Downloading...');
+        window.onerror = function(event) {
+          Module.setStatus('Exception thrown, see JavaScript console');
+          Module.setStatus = function(text) {
+            if (text) Module.printErr('[post-exception status] ' + text);
+          };
+        };
+      </script>
+      <script async type="text/javascript" src="share.js"></script>
+      <script async type="text/javascript" src="datadir.js"></script>
+      <script async type="text/javascript" src="postgres.js"></script>
+
+</body>
+<script src="script.js"></script>
+</html>

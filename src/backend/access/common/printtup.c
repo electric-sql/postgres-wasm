@@ -19,10 +19,14 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "tcop/pquery.h"
+#include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
 
 static void printtup_startup(DestReceiver *self, int operation,
 							 TupleDesc typeinfo);
@@ -482,4 +486,87 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 	printf("\t----\n");
 
 	return true;
+}
+
+/* ----------------------------------------------------------------
+ *		printtup json
+ * ----------------------------------------------------------------
+ */
+
+StringInfoData json_result;
+
+#ifdef EMSCRIPTEN
+EM_JS(void, dispatch_result, (char *res), {
+	var query_result = UTF8ToString(res);
+	out("dispatch_result: '" + query_result + "'");
+	var event = new CustomEvent("pg_wasm_result", {
+		detail: {
+			result: query_result
+		}
+	});
+	window.dispatchEvent(event);
+});
+#endif
+
+void
+debugtup_json_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+{
+	MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	if (!json_result.data)
+		initStringInfo(&json_result);
+	else
+		resetStringInfo(&json_result);
+
+	appendStringInfoChar(&json_result, '[');
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+bool
+debugtup_json(TupleTableSlot *slot, DestReceiver *self)
+{
+	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
+	int			i;
+	bool		needsep = false;
+
+	/* without tuples json_result contain only '[', so len is 1 */
+	if (json_result.len > 1)
+		appendStringInfoChar(&json_result, ',');
+
+	appendStringInfoChar(&json_result, '{');
+
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		Datum		val;
+		bool		isnull;
+		char	   *attname;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
+			continue;
+
+		if (needsep)
+			appendStringInfoString(&json_result, ",");
+		needsep = true;
+
+		attname = NameStr(att->attname);
+		escape_json(&json_result, attname);
+		appendStringInfoChar(&json_result, ':');
+
+		val = slot_getattr(slot, i + 1, &isnull);
+		add_json(val, isnull, &json_result, att->atttypid, false);
+	}
+
+	appendStringInfoChar(&json_result, '}');
+
+	return true;
+}
+
+void
+debugtup_json_shutdown(DestReceiver *self)
+{
+	appendStringInfoChar(&json_result, ']');
+	appendStringInfoChar(&json_result, '\0');
+	dispatch_result(json_result.data);
 }

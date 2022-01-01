@@ -85,11 +85,11 @@ regress_data_files = \
 	$(wildcard $(srcdir)/data/*.data) \
 	$(srcdir)/parallel_schedule $(srcdir)/resultmap
 
-install-tests: all install install-lib installdirs-tests
-	$(MAKE) -C $(top_builddir)/contrib/spi install
-	for file in $(subst $(srcdir)/,,$(regress_data_files)); do \
-		$(INSTALL_DATA) $(srcdir)/$$file '$(DESTDIR)$(pkglibdir)/regress/'$$file || exit; \
-	done
+# install-tests: all install install-lib installdirs-tests
+# 	$(MAKE) -C $(top_builddir)/contrib/spi install
+# 	for file in $(subst $(srcdir)/,,$(regress_data_files)); do \
+# 		$(INSTALL_DATA) $(srcdir)/$$file '$(DESTDIR)$(pkglibdir)/regress/'$$file || exit; \
+# 	done
 
 installdirs-tests: installdirs
 	$(MKDIR_P)  $(patsubst $(srcdir)/%/,'$(DESTDIR)$(pkglibdir)/regress/%',$(sort $(dir $(regress_data_files))))
@@ -97,7 +97,7 @@ installdirs-tests: installdirs
 
 # Get some extra C modules from contrib/spi
 
-all: refint$(DLSUFFIX) autoinc$(DLSUFFIX)
+all: #refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 
 refint$(DLSUFFIX): $(top_builddir)/contrib/spi/refint$(DLSUFFIX)
 	cp $< $@

@@ -337,14 +337,14 @@ checkDataDir(void)
 	 *
 	 * XXX can we safely enable this check on Windows?
 	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_uid != geteuid())
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has wrong ownership",
-						DataDir),
-				 errhint("The server must be started by the user that owns the data directory.")));
-#endif
+// #if !defined(WIN32) && !defined(__CYGWIN__)
+// 	if (stat_buf.st_uid != geteuid())
+// 		ereport(FATAL,
+// 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+// 				 errmsg("data directory \"%s\" has wrong ownership",
+// 						DataDir),
+// 				 errhint("The server must be started by the user that owns the data directory.")));
+// #endif
 
 	/*
 	 * Check if the directory has correct permissions.  If not, reject.
@@ -357,14 +357,14 @@ checkDataDir(void)
 	 * be proper support for Unix-y file permissions.  Need to think of a
 	 * reasonable check to apply on Windows.
 	 */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-	if (stat_buf.st_mode & PG_MODE_MASK_GROUP)
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("data directory \"%s\" has invalid permissions",
-						DataDir),
-				 errdetail("Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).")));
-#endif
+// #if !defined(WIN32) && !defined(__CYGWIN__)
+// 	if (stat_buf.st_mode & PG_MODE_MASK_GROUP)
+// 		ereport(FATAL,
+// 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+// 				 errmsg("data directory \"%s\" has invalid permissions",
+// 						DataDir),
+// 				 errdetail("Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).")));
+// #endif
 
 	/*
 	 * Reset creation modes and mask based on the mode of the data directory.

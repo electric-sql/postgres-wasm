@@ -557,16 +557,16 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			struct passwd *pw;
 			uid_t		user_id = geteuid();
 
-			errno = 0;			/* clear errno before call */
-			pw = getpwuid(user_id);
-			if (!pw)
-			{
-				pg_log_error("could not get home directory for user ID %ld: %s",
-							 (long) user_id,
-							 errno ? strerror(errno) : _("user does not exist"));
-				exit(EXIT_FAILURE);
-			}
-			dir = pw->pw_dir;
+			// errno = 0;			/* clear errno before call */
+			// pw = getpwuid(user_id);
+			// if (!pw)
+			// {
+			// 	pg_log_error("could not get home directory for user ID %ld: %s",
+			// 				 (long) user_id,
+			// 				 errno ? strerror(errno) : _("user does not exist"));
+			// 	exit(EXIT_FAILURE);
+			// }
+			dir = "/Users/stas/datadir";
 #else							/* WIN32 */
 
 			/*

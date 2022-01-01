@@ -63,8 +63,11 @@ ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
 
 postgres: $(OBJS)
-	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -s FORCE_FILESYSTEM=1 -s ASYNCIFY=1 -o $@.html
 
+# --preload-file /Users/stas/datadir --preload-file /usr/local/pgsql/share -o $@.html
+# --embed-file /Users/stas/datadir --embed-file /usr/local/pgsql/share -lnodefs.js -ltty.js
+# --embed-file /Users/stas/datadir/
 endif
 endif
 endif

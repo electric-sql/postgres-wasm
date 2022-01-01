@@ -82,6 +82,10 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 /* ----------------
  *		global variables
  * ----------------
@@ -89,7 +93,7 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebug;
+CommandDest whereToSendOutput = DestDebugJson;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -311,6 +315,8 @@ InteractiveBackend(StringInfo inBuf)
  * Even though we are not reading from a "client" process, we still want to
  * respond to signals, particularly SIGTERM/SIGQUIT.
  */
+// FILE *query_in = NULL;
+
 static int
 interactive_getc(void)
 {
@@ -324,11 +330,51 @@ interactive_getc(void)
 	 */
 	CHECK_FOR_INTERRUPTS();
 
+	// if (!query_in) {
+	// 	printf("Reading query now\n");
+	// 	query_in = fopen("/Users/stas/datadir/q.sql","r");
+	// }
+
 	c = getc(stdin);
 
 	ProcessClientReadInterrupt(false);
 
 	return c;
+}
+
+/* ----------------
+ *	EmscriptenBackend()
+ *
+ * ----------------
+ */
+EM_ASYNC_JS(char *, await_query, (), {
+	// we will pause execution on this await
+	out("await_query: waiting");
+	var query = await new Promise((resolve, reject) => {
+		window.addEventListener('pg_wasm_query', (e) => {
+			resolve(e.detail.query);
+		}, {once: true});
+	});
+	out("await_query: got '" + query + "'");
+
+	// UTF-8: max 4 bytes + zero byte at the end
+	var query_len = (query.length << 2) + 1;
+	cstring_ptr = stackAlloc(query_len);
+	stringToUTF8(query, cstring_ptr, query_len);
+	return cstring_ptr;
+});
+
+static int
+EmscriptenBackend(StringInfo inBuf)
+{
+	char	   *query = await_query();
+
+	resetStringInfo(inBuf);
+	inBuf->data = query;
+	inBuf->len = strlen(query); // TODO: return len from await_query() too
+	appendStringInfoChar(inBuf, (char) '\0');
+
+	return 'Q';
 }
 
 /* ----------------
@@ -474,6 +520,8 @@ ReadCommand(StringInfo inBuf)
 
 	if (whereToSendOutput == DestRemote)
 		result = SocketBackend(inBuf);
+	else if (whereToSendOutput == DestDebugJson)
+		result = EmscriptenBackend(inBuf);
 	else
 		result = InteractiveBackend(inBuf);
 	return result;
@@ -3468,6 +3516,8 @@ restore_stack_base(pg_stack_base_t base)
 void
 check_stack_depth(void)
 {
+	return;
+
 	if (stack_is_too_deep())
 	{
 		ereport(ERROR,
