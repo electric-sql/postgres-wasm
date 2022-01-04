@@ -65,37 +65,6 @@ main(int argc, char *argv[])
 
 	printf("Hey-hey!\n");
 
-#ifdef EMSCRIPTEN
-	EM_ASM(
-		// FS.mkdir('/data');
-
-		// FS.mkdir('/usr');
-		// FS.mkdir('/usr/local');
-		// FS.mkdir('/usr/local/pgsql');
-
-		// FS.mkdir('/Users');
-		// FS.mkdir('/Users/stas');
-
-		FS.mkdir('/Users/stas/datadir/pg_notify');
-
-		// FS.mkdir('/Users/stas/datadir/pg_snapshots');
-		FS.mkdir('/Users/stas/datadir/pg_commit_ts');
-		// FS.mkdir('/Users/stas/datadir/pg_stat');
-		
-		// FS.mkdir('/Users/stas/datadir/pg_serial');
-		FS.mkdir('/Users/stas/datadir/pg_replslot');
-		// FS.mkdir('/Users/stas/datadir/pg_dynshmem');
-		FS.mkdir('/Users/stas/datadir/pg_twophase');
-		FS.mkdir('/Users/stas/datadir/pg_tblspc');
-		// FS.mkdir('/Users/stas/datadir/pg_dynshmem');
-
-		// FS.mkdir('/usr/local/pgsql/share');
-
-		// FS.mount(MEMFS, { root: '/Users/stas/datadir' }, '/data');
-		// FS.mount(MEMFS, { root: '/usr/local/pgsql/share' }, '/usr/local/pgsql/share');
-	);
-#endif
-
 	/*
 	 * If supported on the current platform, set up a handler to be called if
 	 * the backend/postmaster crashes with a fatal signal or exception.

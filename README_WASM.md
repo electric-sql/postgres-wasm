@@ -3,94 +3,35 @@
 
 ## Compilation
 
-export EMMAKEN_CFLAGS="-Wl,--allow-undefined"
-emconfigure ./configure CFLAGS='-Oz' --without-readline --without-zlib --disable-thread-safety --disable-spinlocks
-export EMMAKEN_CFLAGS="-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=65536000 -s EMULATE_FUNCTION_POINTER_CASTS=1"
-emmake make -j4
-
-## Setup the data directory
-
-emcc src/bin/initdb/initdb.o -L src/port/ -L src/common -L src/fe_utils -L src/interfaces/libpq -lpq -lpgfeutils -lpgcommon -lpgport -o initdb.js
-
-# create empty datadir
-rm -rf datadir
-mkdir datadir
-chmod 0750 datadir
-touch datadir/postgresql.conf
-touch datadir/postgresql.auto.conf
-touch datadir/pg_ident.conf
-touch datadir/pg_hba.conf
-echo '15devel' > datadir/PG_VERSION
-mkdir -p datadir/global
-mkdir -p datadir/pg_wal/archive_status
-mkdir -p datadir/pg_commit_ts
-mkdir -p datadir/pg_dynshmem
-mkdir -p datadir/pg_notify
-mkdir -p datadir/pg_serial
-mkdir -p datadir/pg_snapshots
-mkdir -p datadir/pg_subtrans
-mkdir -p datadir/pg_twophase
-mkdir -p datadir/pg_multixact
-mkdir -p datadir/pg_multixact/members
-mkdir -p datadir/pg_multixact/offsets
-mkdir -p datadir/base
-mkdir -p datadir/base/1
-echo '15devel' > datadir/base/1/PG_VERSION
-mkdir -p datadir/pg_replslot
-mkdir -p datadir/pg_tblspc
-mkdir -p datadir/pg_stat
-mkdir -p datadir/pg_stat_tmp
-mkdir -p datadir/pg_xact
-mkdir -p datadir/pg_logical
-mkdir -p datadir/pg_logical/snapshots
-mkdir -p datadir/pg_logical/mapping
+Prerequisites:
+* emscripten/3.1.0
+* nodejs
 
 
-# add that keys to postgres.o compilation:
---preload-file /Users/stas/datadir --preload-file /usr/local/pgsql/share/
+To build postgres.wasm and datadir bundle:
+```
+make -f wasm/Makefile debug-build
+make -f wasm/Makefile debug-datadir
+```
 
-cd src/backend
+You can check it in the browser. Wasm file would not be loaded as 'file://' links, so you need to have an http server on localhost, e.g.:
+```
+cd wasm
+python3 -m http.server
+```
 
-node postgres --boot -x1 -X 16777216 -d 5 -c dynamic_shared_memory_type=mmap -D /data
-
-
-
-node postgres --single -F -O -j -c search_path=pg_catalog -c dynamic_shared_memory_type=mmap -d 5 -D /data template1
-
-
-
-
-------
+Now navigate to `http://localhost:8000/`
 
 
-var Module = {
-  preRun: [function() {
-    function stdin() {
-      // Return ASCII code of character, or null if no input
-    }
+## TODO
 
-    function stdout(asciiCode) {
-      // Do something with the asciiCode
-    }
+- [x] separate fs packaging from compiling
+- [x] read from events
+- [x] somehow report back results
+- [x] identify and fix FUNCTION_POINTER_CASTS
+- [x] identify and fix corrupt memory error
 
-    function stderr(asciiCode) {
-      // Do something with the asciiCode
-    }
-
-    FS.init(stdin, stdout, stderr);
-  }]
-};
-
-
-# todo
-
-+ separate fs packaging from compiling
-+ read from events
-+ somehow report back
-+ identify and fix FUNCTION_POINTER_CASTS
-+ fix report back corrupt memory
-
-* automate datadir process
+- [x] automate datadir process
 * split to commits, ensure usual postgres is properly built
 * provide js wrapper
 * nice UI
@@ -102,5 +43,7 @@ var Module = {
 * create postgres db -- more init
 
 * regress test? =)
+
+* "runnable" sql embeds
 
 * work with the remote data

@@ -6485,6 +6485,16 @@ RelationCacheInitFileRemove(void)
 	struct dirent *de;
 	char		path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
 
+#ifdef EMSCRIPTEN
+	/*
+	 * emscripten 3.0.1 breaks here on traversal up in FS.realPath() on the
+	 * mount point (it has path field set, but not the name field).
+	 *
+	 * TODO: make a standalone repro and report.
+	 */
+	return;
+#endif
+
 	snprintf(path, sizeof(path), "global/%s",
 			 RELCACHE_INIT_FILENAME);
 	unlink_initfile(path, LOG);
