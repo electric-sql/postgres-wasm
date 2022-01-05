@@ -10,7 +10,7 @@ debug-build:
 		--with-system-tzdata=/usr/share/zoneinfo \
 		--enable-debug
 	EMCC_CFLAGS="-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s WARN_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=65536000 -s EMULATE_FUNCTION_POINTER_CASTS=1 -s ASSERTIONS=1" \
-		emmake make MAKELEVEL=0 -j4
+		emmake make -C src/backend MAKELEVEL=0
 	mkdir -p wasm/debug
 	cp src/backend/postgres wasm/debug/postgres.js
 	cp src/backend/postgres.wasm wasm/debug/postgres.wasm

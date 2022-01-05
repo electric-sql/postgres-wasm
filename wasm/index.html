@@ -56,7 +56,10 @@
             FS.mkdir('/pgdata/pg_tblspc');
           }],
           postRun: [],
-          arguments: ['--single','-F','-O','-j','-c','search_path=pg_catalog','-c','dynamic_shared_memory_type=mmap','-d','0','-D','/pgdata','template1'],
+          arguments: ['--single','-F','-O','-j','-c','search_path=pg_catalog',
+            '-c','dynamic_shared_memory_type=mmap',
+            '-c', 'max_prepared_transactions=10',
+            '-d','0','-D','/pgdata','template1'],
           print: (function() {
             return function(text) {
                 if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');

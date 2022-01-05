@@ -14,7 +14,7 @@ make -f wasm/Makefile debug-build
 make -f wasm/Makefile debug-datadir
 ```
 
-You can check it in the browser. Wasm file would not be loaded as 'file://' links, so you need to have an http server on localhost, e.g.:
+You can check it in the browser. Due to modern browsers security policy wasm file can't be loaded with a 'file://' link, so you need to have an http server on the localhost, e.g.:
 ```
 cd wasm
 python3 -m http.server
