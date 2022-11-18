@@ -10,10 +10,14 @@
 // * /usr/local/pgsql/share/ directory. Postgres needs it at least for the
 //   timezone. Probably with a bit of work we could get rid of it.
 //
-var fs = require('fs');
-var path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
-DIRS = [
+import EmPostgres from "./pg-wasm/release/postgres.js";
+
+let DIRS = [
   'global',
   'pg_wal',
   'pg_wal/archive_status',
@@ -40,14 +44,14 @@ DIRS = [
 ]
 
 
-FILES = [
+let FILES = [
   'postgresql.conf',
   'postgresql.auto.conf',
   'pg_ident.conf',
   'pg_hba.conf',
 ]
 
-WASM_PGDATA = '/pgdata'
+let WASM_PGDATA = '/pgdata'
 
 // Wasm has it's own 32-bit architecture, so wee need to initialize the data directory
 // from the wasm itself. Use NODEFS shared directories to do this.
@@ -57,15 +61,15 @@ function initDataDir(build_path, share_path) {
 
   // 1. Create postgres datadir structure
   console.log('Creating postgres datadir structure in :', datadir_path)
-  fs.rmSync(datadir_path, {recursive: true, force: true});
+  fs.rmSync(datadir_path, { recursive: true, force: true });
   fs.mkdirSync(datadir_path);
   fs.chmodSync(datadir_path, '0750');
-  for (dir of DIRS) {
+  for (let dir of DIRS) {
     console.log('Creating directory: ' + datadir_path + '/' + dir);
     fs.mkdirSync(datadir_path + '/' + dir);
     fs.chmodSync(datadir_path + '/' + dir, '0700');
   }
-  for (file of FILES) {
+  for (let file of FILES) {
     fs.writeFileSync(datadir_path + '/' + file, '');
   }
   fs.writeFileSync(datadir_path + '/PG_VERSION', '15devel');
@@ -86,16 +90,18 @@ function initDataDir(build_path, share_path) {
   fs.writeFileSync(share_path + '/postgres_wasm.bki', bki);
 
   // 3. Bootstrap postgres
-  var Module = {
-    preRun: () => {
-        FS.mkdir(WASM_PGDATA);
-        FS.mount(NODEFS, { root: datadir_path }, WASM_PGDATA);
-  
-        FS.mkdir('/usr');
-        FS.mkdir('/usr/local');
-        FS.mkdir('/usr/local/pgsql');
-        FS.mkdir('/usr/local/pgsql/share');
-        FS.mount(NODEFS, { root: share_path }, '/usr/local/pgsql/share');
+  var emscripten_opts = {
+    preRun: (root_module) => {
+      let nodefs = root_module.FS.filesystems.NODEFS;
+
+      root_module.FS.mkdir(WASM_PGDATA);
+      root_module.FS.mount(nodefs, { root: datadir_path }, WASM_PGDATA);
+
+      root_module.FS.mkdir('/usr');
+      root_module.FS.mkdir('/usr/local');
+      root_module.FS.mkdir('/usr/local/pgsql');
+      root_module.FS.mkdir('/usr/local/pgsql/share');
+      root_module.FS.mount(nodefs, { root: share_path }, '/usr/local/pgsql/share');
     },
     locateFile: (file_path, _dir) => {
       let p = path.resolve(build_path, file_path);
@@ -104,13 +110,25 @@ function initDataDir(build_path, share_path) {
     },
     arguments: ['--boot', '-x1', '-X', '16777216', '-d', '5', '-c', 'dynamic_shared_memory_type=mmap', '-D', WASM_PGDATA]
   };
-  eval(fs.readFileSync(path.resolve(build_path,'postgres.js')).toString());
+
+  new EmPostgres(emscripten_opts).then(_ => {
+    console.log('Postgres bootstrap done.');
+  });
 
 }
 
+let build_type = 'debug';
+if (process.env.PGWASM_BUILD_TYPE) {
+  build_type = process.env.PGWASM_BUILD_TYPE;
+}
+
 // assumming that this script is located in repo_root/wasm
-let build_path = path.resolve(__dirname, 'debug');
-let share_path = path.resolve(__dirname, '../tmp_install/usr/local/pgsql/share');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+globalThis.__dirname = path.dirname(import.meta.url);
+globalThis.require = createRequire(import.meta.url);
+
+let build_path = path.resolve(dirname, 'pg-wasm/' + build_type);
+let share_path = path.resolve(dirname, '../tmp_install/usr/local/pgsql/share');
 
 initDataDir(build_path, share_path);
-

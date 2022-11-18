@@ -1,0 +1,12 @@
+{
+  "name": "pg-wasm",
+  "version": "1.0.0",
+  "main": "pg-wasm.js",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "public/postgres.wasm",
+    "public/pgdata.data",
+    "public/share.data"
+  ]
+}

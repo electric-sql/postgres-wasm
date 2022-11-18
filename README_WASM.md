@@ -1,4 +1,4 @@
-# postgres@wasm
+# pg-wasm
 
 
 ## Compilation
@@ -6,18 +6,19 @@
 Prerequisites:
 * emscripten/3.1.0
 * nodejs
+* postgres build toolchain
 
 
 To build postgres.wasm and datadir bundle:
 ```
-make -f wasm/Makefile debug-build
-make -f wasm/Makefile debug-datadir
+make -f wasm/pg-wasm/Makefile build
+make -f wasm/pg-wasm/Makefile datadir
 ```
 
-You can check it in the browser. Due to modern browsers security policy wasm file can't be loaded with a 'file://' link, so you need to have an http server on the localhost, e.g.:
+You can check it in the browser locally:
 ```
-cd wasm
-python3 -m http.server
+cd wasm/pg-wasm-app
+yarn run start
 ```
 
 Now navigate to `http://localhost:8000/`
@@ -30,20 +31,32 @@ Now navigate to `http://localhost:8000/`
 - [x] somehow report back results
 - [x] identify and fix FUNCTION_POINTER_CASTS
 - [x] identify and fix corrupt memory error
+- [x] automate datadir creation process
+- [x] provide js wrapper
+- [x] xterm.js + readline UI
 
-- [x] automate datadir process
-* split to commits, ensure usual postgres is properly built
-* provide js wrapper
-* nice UI
 * catch errors
-
+* split to commits, ensure usual postgres is properly built
 * less data in share
-* exclude wal from the datadir (kk hack) or smaller WAL?
+* exclude wal from the datadir (kk hack)
+* inspet where rest of the data went
+* smaller binary (?)
 
-* create postgres db -- more init
+* try to deploy in worker or other cloud wasm runtime (and benchmark?)
 
 * regress test? =)
 
 * "runnable" sql embeds
 
 * work with the remote data
+
+
+function load(Module) {
+
+<...>
+
+
+  return Module;
+}
+
+export default load;

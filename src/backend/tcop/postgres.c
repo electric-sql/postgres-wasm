@@ -359,7 +359,7 @@ EM_ASYNC_JS(char *, await_query, (), {
 
 	// UTF-8: max 4 bytes + zero byte at the end
 	var query_len = (query.length << 2) + 1;
-	cstring_ptr = stackAlloc(query_len);
+	var cstring_ptr = stackAlloc(query_len);
 	stringToUTF8(query, cstring_ptr, query_len);
 	return cstring_ptr;
 });
