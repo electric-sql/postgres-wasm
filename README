@@ -1,3 +1,23 @@
+Notes:
+
+I was a able to run the code by checking out the previous commit
+(e09661c) and following the instructions in README_WASM.md.
+
+Then start the http server from the wasm directory:
+
+cd wasm
+python3 -m http.server
+
+and open the browser on the address served(I used Chrome).
+
+You can communicate with Postgres using the console:
+
+const event =  new CustomEvent("pg_wasm_query", 
+  { "detail": { "query": "SELECT * FROM public.items;"}}); 
+
+window.dispatchEvent(event);
+
+
 PostgreSQL Database Management System
 =====================================
 
