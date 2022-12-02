@@ -3,6 +3,8 @@ Notes:
 I was a able to run the code by checking out the previous commit
 (e09661c) and following the instructions in README_WASM.md.
 
+User command `make -f wasm/Makefile debug-build` and `make -f wasm/Makefile debug-datadir`.
+
 Then start the http server from the wasm directory:
 
 cd wasm
