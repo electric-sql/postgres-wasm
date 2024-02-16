@@ -348,16 +348,16 @@ interactive_getc(void)
  * ----------------
  */
 EM_ASYNC_JS(char *, await_query, (), {
-	// we will pause execution on this await
+	// Await a query from JS land
 	out("await_query: waiting");
+	var event = new Module.Event("waiting");
+	Module.eventTarget.dispatchEvent(event);
 	var query = await new Promise((resolve, reject) => {
-		window.addEventListener('pg_wasm_query', (e) => {
+		Module.eventTarget.addEventListener("query", (e) => {
 			resolve(e.detail.query);
 		}, {once: true});
 	});
 	out("await_query: got '" + query + "'");
-
-	// UTF-8: max 4 bytes + zero byte at the end
 	var query_len = (query.length << 2) + 1;
 	var cstring_ptr = stackAlloc(query_len);
 	stringToUTF8(query, cstring_ptr, query_len);

@@ -220,7 +220,7 @@ loose-envify@^1.1.0:
   dependencies:
     js-tokens "^3.0.0 || ^4.0.0"
 
-"pg-wasm@file:./../pg-wasm":
+"pg-wasm@file:../pg-wasm":
   version "1.0.0"
 
 re-resizable@^6.9.9:

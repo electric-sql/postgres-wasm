@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": "Stas Kelvich",
   "scripts": {
-    "build": "esbuild --bundle src/app.tsx --outdir=static --loader:.data=file --loader:.wasm=file",
+    "build": "esbuild --bundle src/app.tsx --outdir=static --loader:.data=file --loader:.wasm=file --external:child_process --external:path --external:fs",
     "start": "npm run build -- --servedir=static"
   },
   "dependencies": {

@@ -114,7 +114,6 @@ function initDataDir(build_path, share_path) {
   new EmPostgres(emscripten_opts).then(_ => {
     console.log('Postgres bootstrap done.');
   });
-
 }
 
 let build_type = 'debug';
