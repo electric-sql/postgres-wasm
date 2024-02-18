@@ -1,13 +1,12 @@
-import EmPostgres from "../release/postgres.js";
-import type { PostgresliteFsInstance } from "./fs.js";
-import { PostgresliteFsNode } from "./nodefs.js";
-import { PostgresliteMem } from "./memfs.js";
-import path from "path";
-import { createRequire } from "module";
+import EmPostgresFactory, { type EmPostgres } from "../release/postgres.js";
+import type { Filesystem } from "./fs.js";
+import { NodeFS } from "./nodefs.js";
+import { MemoryFS } from "./memoryfs.js";
+import { nodeValues } from "./utils.js";
 
 export class PGlite {
   readonly dataDir?: string;
-  protected fs?: PostgresliteFsInstance;
+  protected fs?: Filesystem;
   protected emp?: any;
 
   #initStarted = false;
@@ -26,30 +25,34 @@ export class PGlite {
     this.waitReady = this.#init();
   }
 
-  #init() {
+  async #init() {
     return new Promise<void>(async (resolve, reject) => {
       if (this.#initStarted) {
         throw new Error("Already initializing");
       }
       this.#initStarted = true;
 
-      if (this.dataDir) {
-        this.fs = new PostgresliteFsNode(this.dataDir);
-      } else {
-        this.fs = new PostgresliteMem();
-      }
-
-      const chosenFs = this.dataDir ? PostgresliteFsNode : PostgresliteMem;
-      this.fs = new chosenFs(this.dataDir);
+      this.fs = this.dataDir ? new NodeFS(this.dataDir) : new MemoryFS();
       await this.fs.init();
 
-      let emscriptenOpts = {
-        // prettier-ignore
+      let emscriptenOpts: Partial<EmPostgres> = {
         arguments: [
-          '--single', '-F', '-O', '-j', '-c', 'search_path=pg_catalog',
-          '-c', 'dynamic_shared_memory_type=mmap',
-          '-c', 'max_prepared_transactions=10',
-          '-d', '0', '-D', '/pgdata', 'template1'],
+          "--single", // Single user mode
+          "-F", // Disable fsync (TODO: Only for in-memory mode?)
+          "-O", // Allow the structure of system tables to be modified. This is used by initdb
+          "-j", // Single use mode - Use semicolon followed by two newlines, rather than just newline, as the command entry terminator.
+          "-c", // Set parameter
+          "search_path=pg_catalog",
+          "-c",
+          "dynamic_shared_memory_type=mmap",
+          "-c",
+          "max_prepared_transactions=10",
+          "-d", // Debug level
+          "5",
+          "-D", // Data directory
+          "/pgdata",
+          "template1",
+        ],
         print: (text: string) => {
           // console.error(text);
         },
@@ -69,18 +72,11 @@ export class PGlite {
         },
         eventTarget: this.#eventTarget,
         Event: CustomEvent,
-        onExit: () => {
-          this.#closed = true;
-          // console.log("Postgreslite closed");
-        },
       };
 
-      emscriptenOpts = this.fs.emscriptenOpts(emscriptenOpts);
-
-      globalThis.__dirname = path.dirname(import.meta.url);
-      globalThis.require = createRequire(import.meta.url);
-
-      const emp = new EmPostgres(emscriptenOpts);
+      const { dirname, require } = await nodeValues();
+      emscriptenOpts = await this.fs.emscriptenOpts(emscriptenOpts);
+      const emp = await EmPostgresFactory(emscriptenOpts, dirname, require);
       this.emp = emp;
     });
   }
@@ -101,6 +97,7 @@ export class PGlite {
     /**
      * TODO:
      * - Support for parameterized queries
+     * - Mutex to prevent multiple queries at the same time
      */
     if (this.#closed) {
       throw new Error("Postgreslite is closed");
@@ -138,7 +135,6 @@ export class PGlite {
           query: query,
         },
       });
-
       this.#eventTarget.dispatchEvent(event);
     });
   }

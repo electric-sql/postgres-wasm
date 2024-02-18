@@ -1,6 +1,15 @@
-import { Postgreslite } from "./index.js";
+import { PGlite } from "./index.js";
 
-const pg = new Postgreslite();
+console.log("Starting...");
+const pg = new PGlite();
+// const pg = new PGlite('pgdata');
+
+console.log("Waiting for ready...");
+await pg.waitReady;
+
+// process.exit(0);
+
+console.log("Ready!");
 
 console.log("Creating table...");
 await pg.query(`
@@ -11,9 +20,7 @@ await pg.query(`
 `);
 
 console.log("Inserting data...");
-await pg.query(`
-  INSERT INTO test (name) VALUES ('test');
-`);
+await pg.query("INSERT INTO test (name) VALUES ('test');");
 
 console.log("Selecting data...");
 const res = await pg.query(`
@@ -22,25 +29,23 @@ const res = await pg.query(`
 
 console.log(res);
 
-try {
-  await pg.query('1');
-} catch (e) {
-  console.log('Error caught:');
-  console.log(e);
-}
+// try {
+//   await pg.query('1');
+// } catch (e) {
+//   console.log('Error caught:');
+//   console.log(e);
+// }
 
-console.log(await pg.query('SELECT * FROM test;'));
+console.log(await pg.query("SELECT * FROM test;"));
 
 // Test transaction
 
-await pg.query('BEGIN;');
-await pg.query('INSERT INTO test (name) VALUES (\'test2\');');
-await pg.query('ROLLBACK;');
-console.log(await pg.query('SELECT * FROM test;'));
+await pg.query("BEGIN;");
+await pg.query("INSERT INTO test (name) VALUES ('test2');");
+await pg.query("ROLLBACK;");
+console.log(await pg.query("SELECT * FROM test;"));
 
-await pg.query('BEGIN;');
-await pg.query('INSERT INTO test (name) VALUES (\'test3\');');
-await pg.query('COMMIT;');
-console.log(await pg.query('SELECT * FROM test;'));
-
-console.log("Postgreslite still running...");
+await pg.query("BEGIN;");
+await pg.query("INSERT INTO test (name) VALUES ('test3');");
+await pg.query("COMMIT;");
+console.log(await pg.query("SELECT * FROM test;"));
