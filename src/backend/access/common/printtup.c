@@ -497,14 +497,13 @@ StringInfoData json_result;
 
 #ifdef EMSCRIPTEN
 EM_JS(void, dispatch_result, (char *res), {
+	// Dispatch the result to JS land
 	var query_result = UTF8ToString(res);
 	out("dispatch_result: '" + query_result + "'");
-	var event = new CustomEvent("pg_wasm_result", {
-		detail: {
-			result: query_result
-		}
+	var event = new Module.Event("result", {
+		detail: { result: JSON.parse(query_result) },
 	});
-	window.dispatchEvent(event);
+	Module.eventTarget.dispatchEvent(event);
 });
 #endif
 
