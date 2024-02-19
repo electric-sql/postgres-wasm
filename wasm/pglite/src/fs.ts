@@ -1,3 +1,4 @@
+import type { EmPostgres, FS } from "../release/postgres.js";
 export const PGDATA = "/pgdata";
 
 export interface FilesystemFactory {
@@ -6,7 +7,9 @@ export interface FilesystemFactory {
 
 export interface Filesystem {
   init(): Promise<void>;
-  emscriptenOpts(opts: any): Promise<any>;
+  emscriptenOpts(opts: Partial<EmPostgres>): Promise<Partial<EmPostgres>>;
+  syncToFs(mod: FS): Promise<void>;
+  initialSyncFs(mod: FS): Promise<void>;
 }
 
 export abstract class FilesystemBase implements Filesystem {
@@ -15,5 +18,32 @@ export abstract class FilesystemBase implements Filesystem {
     this.dataDir = dataDir;
   }
   abstract init(): Promise<void>;
-  abstract emscriptenOpts(opts: any): Promise<any>;
+  abstract emscriptenOpts(
+    opts: Partial<EmPostgres>,
+  ): Promise<Partial<EmPostgres>>;
+  async syncToFs(mod: FS) {}
+  async initialSyncFs(mod: FS) {}
+}
+
+// Emscripten filesystem utility functions:
+
+export function copyDir(fs: FS, src: string, dest: string) {
+  const entries = fs.readdir(src);
+  for (const name of entries) {
+    if (name === "." || name === "..") continue;
+
+    const srcPath = src + "/" + name;
+    const destPath = dest + "/" + name;
+    if (isDir(fs, srcPath)) {
+      fs.mkdir(destPath);
+      copyDir(fs, srcPath, destPath);
+    } else {
+      const data = fs.readFile(srcPath);
+      fs.writeFile(destPath, data);
+    }
+  }
+}
+
+export function isDir(fs: FS, path: string) {
+  return fs.isDir(fs.stat(path).mode);
 }

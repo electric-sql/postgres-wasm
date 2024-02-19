@@ -352,26 +352,30 @@ EM_ASYNC_JS(char *, await_query, (), {
 	out("await_query: waiting");
 	var event = new Module.Event("waiting");
 	Module.eventTarget.dispatchEvent(event);
-	var query = await new Promise((resolve, reject) => {
+	var { query, qtype } = await new Promise((resolve, reject) => {
 		Module.eventTarget.addEventListener("query", (e) => {
-			resolve(e.detail.query);
+			resolve(e.detail);
 		}, {once: true});
 	});
-	out("await_query: got '" + query + "'");
-	var query_len = (query.length << 2) + 1;
-	var cstring_ptr = stackAlloc(query_len);
-	stringToUTF8(query, cstring_ptr, query_len);
+	query = query === undefined ? '' : query;
+	qtype = qtype === undefined ? 'Q' : qtype;
+	out("await_query: got '" + query + "' with type '" + qtype + "'");
+	var combined = qtype + query; // Prepend qtype to query
+	var combined_len = (query.length << 2) + 1;
+	var cstring_ptr = stackAlloc(combined_len);
+	stringToUTF8(combined, cstring_ptr, combined_len);
 	return cstring_ptr;
 });
 
 static int
 EmscriptenBackend(StringInfo inBuf)
 {
-	char	   *query = await_query();
+	char *combined = await_query();
+	char qtype = *combined; // First character is qtype
 
 	resetStringInfo(inBuf);
-	inBuf->data = query;
-	inBuf->len = strlen(query); // TODO: return len from await_query() too
+	inBuf->data = combined + 1; // Skip qtype character
+	inBuf->len = strlen(inBuf->data);
 	appendStringInfoChar(inBuf, (char) '\0');
 
 	return 'Q';

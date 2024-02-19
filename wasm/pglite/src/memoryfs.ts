@@ -1,4 +1,4 @@
-import { FilesystemBase, PGDATA } from "./fs.js";
+import { FilesystemBase, PGDATA, copyDir } from "./fs.js";
 import type { FS, EmPostgres } from "../release/postgres.js";
 import loadPgShare from "../release/share.js";
 import { initDb } from "./initdb.js";
@@ -29,7 +29,7 @@ export class MemoryFS extends FilesystemBase {
           mod.FS.mount(
             proxyfs,
             { root: PGDATA + "/", fs: this.initModule.FS },
-            PGDATA + "_temp"
+            PGDATA + "_temp",
           );
           copyDir(mod.FS, PGDATA + "_temp", PGDATA);
           mod.FS.unmount(PGDATA + "_temp");
@@ -52,25 +52,4 @@ export class MemoryFS extends FilesystemBase {
     loadPgShare(options, require);
     return options;
   }
-}
-
-function copyDir(fs: FS, src: string, dest: string) {
-  const entries = fs.readdir(src);
-  for (const name of entries) {
-    if (name === "." || name === "..") continue;
-
-    const srcPath = src + "/" + name;
-    const destPath = dest + "/" + name;
-    if (isDir(fs, srcPath)) {
-      fs.mkdir(destPath);
-      copyDir(fs, srcPath, destPath);
-    } else {
-      const data = fs.readFile(srcPath);
-      fs.writeFile(destPath, data);
-    }
-  }
-}
-
-function isDir(fs: FS, path: string) {
-  return fs.isDir(fs.stat(path).mode);
 }

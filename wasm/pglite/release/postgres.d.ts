@@ -426,6 +426,7 @@ export interface EmPostgres extends EmscriptenModule {
   FS: FS;
   eventTarget: EventTarget;
   Event: typeof CustomEvent;
+  onRuntimeInitialized: (Module: EmPostgres) => Promise<void>;
 }
 
 function EmPostgresFactory(
