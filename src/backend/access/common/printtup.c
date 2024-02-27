@@ -567,5 +567,7 @@ debugtup_json_shutdown(DestReceiver *self)
 {
 	appendStringInfoChar(&json_result, ']');
 	appendStringInfoChar(&json_result, '\0');
+#ifdef EMSCRIPTEN
 	dispatch_result(json_result.data);
+#endif
 }
