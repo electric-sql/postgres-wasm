@@ -347,38 +347,39 @@ interactive_getc(void)
  *
  * ----------------
  */
+
+#ifdef EMSCRIPTEN
 EM_ASYNC_JS(char *, await_query, (), {
 	// Await a query from JS land
-	out("await_query: waiting");
 	var event = new Module.Event("waiting");
 	Module.eventTarget.dispatchEvent(event);
-	var { query, qtype } = await new Promise((resolve, reject) => {
+	var query = await new Promise((resolve, reject) => {
 		Module.eventTarget.addEventListener("query", (e) => {
 			resolve(e.detail);
 		}, {once: true});
 	});
-	query = query === undefined ? '' : query;
-	qtype = qtype === undefined ? 'Q' : qtype;
-	out("await_query: got '" + query + "' with type '" + qtype + "'");
-	var combined = qtype + query; // Prepend qtype to query
-	var combined_len = (query.length << 2) + 1;
-	var cstring_ptr = stackAlloc(combined_len);
-	stringToUTF8(combined, cstring_ptr, combined_len);
+	var cstring_ptr = allocateUTF8(query);
 	return cstring_ptr;
 });
+#endif
 
 static int
 EmscriptenBackend(StringInfo inBuf)
 {
-	char *combined = await_query();
-	char qtype = *combined; // First character is qtype
+	char *query = await_query();
+	char qtype = *query; // First character is qtype
+	int qlen = strlen(query);
 
 	resetStringInfo(inBuf);
-	inBuf->data = combined + 1; // Skip qtype character
-	inBuf->len = strlen(inBuf->data);
-	appendStringInfoChar(inBuf, (char) '\0');
+	if (qlen > 1)
+	{
+		appendBinaryStringInfoNT(inBuf, query + 1, qlen - 1);
+		appendStringInfoChar(inBuf, (char) '\0');
+	}
+	
+	free(query);
 
-	return 'Q';
+	return qtype;
 }
 
 /* ----------------
