@@ -342,6 +342,7 @@ interactive_getc(void)
 	return c;
 }
 
+#ifdef EMSCRIPTEN
 /* ----------------
  *	EmscriptenBackend()
  *
@@ -381,6 +382,7 @@ EmscriptenBackend(StringInfo inBuf)
 
 	return qtype;
 }
+#endif
 
 /* ----------------
  *	SocketBackend()		Is called for frontend-backend connections
@@ -525,8 +527,10 @@ ReadCommand(StringInfo inBuf)
 
 	if (whereToSendOutput == DestRemote)
 		result = SocketBackend(inBuf);
+#ifdef EMSCRIPTEN
 	else if (whereToSendOutput == DestDebugJson)
 		result = EmscriptenBackend(inBuf);
+#endif
 	else
 		result = InteractiveBackend(inBuf);
 	return result;
