@@ -195,6 +195,10 @@ WaitEventSet *FeBeWaitSet;
  * --------------------------------
  */
 
+static StringInfoData emscripten_buffer;
+static bool emscripten_buffer_is_initialized = false;
+static bool emscripten_buffer_busy = false;
+
 #ifdef EMSCRIPTEN
 EM_JS(void, emscripten_dispatch_result, (char *res, int len), {
 	// Dispatch the result to JS land
@@ -207,61 +211,59 @@ EM_JS(void, emscripten_dispatch_result, (char *res, int len), {
 });
 #endif
 
+static void emscripten_init_buffer(void) {
+    if (!emscripten_buffer_is_initialized) {
+        initStringInfo(&emscripten_buffer);
+        emscripten_buffer_is_initialized = true;
+    }
+}
+
 static void emscripten_comm_reset(void) {
-    printf("emscripten_comm_reset");
+    if (emscripten_buffer_is_initialized) {
+        resetStringInfo(&emscripten_buffer);
+    } else {
+		emscripten_init_buffer();
+	}
 }
 
 static int emscripten_flush(void) {
-    printf("emscripten_flush");
+    if (emscripten_buffer.len > 0) {
+        emscripten_dispatch_result(emscripten_buffer.data, emscripten_buffer.len);
+        resetStringInfo(&emscripten_buffer);
+    }
     return 0;
 }
 
 static int emscripten_flush_if_writable(void) {
-    printf("emscripten_flush_if_writable");
+    return emscripten_flush();
     return 0;
 }
 
 static bool emscripten_is_send_pending(void) {
-    printf("emscripten_is_send_pending");
-    return false;
+    return emscripten_buffer.len > 0;
 }
 
 static int emscripten_putmessage(char msgtype, const char *s, size_t len) {
-	StringInfoData buf;
-	uint32		n32;
+    if (emscripten_buffer_busy)
+        return 0;
+    emscripten_buffer_busy = true;
 
-	Assert(msgtype != 0);
+    emscripten_init_buffer();
 
-	if (PqCommBusy)
-		return 0;
-	PqCommBusy = true;
+    uint32 n32;
+    Assert(msgtype != 0);
 
-	// Initialize StringInfoData buffer
-	initStringInfo(&buf);
+    appendStringInfoChar(&emscripten_buffer, msgtype);
+    n32 = pg_hton32((uint32) (len + 4));
+    appendBinaryStringInfo(&emscripten_buffer, (char *) &n32, 4);
+    appendBinaryStringInfo(&emscripten_buffer, s, len);
 
-	// Append msgtype
-	appendStringInfoChar(&buf, msgtype);
-
-	// Calculate message length (len + 4) and convert to network byte order
-	n32 = pg_hton32((uint32) (len + 4));
-	// Append length
-	appendBinaryStringInfo(&buf, (char *) &n32, 4);
-
-	// Append actual message
-	appendBinaryStringInfo(&buf, s, len);
-
-	// Dispatch the result
-	emscripten_dispatch_result(buf.data, buf.len);
-
-	// Free StringInfoData buffer memory
-	pfree(buf.data);
-
-	PqCommBusy = false;
-	return 0;
+    emscripten_buffer_busy = false;
+    return 0;
 
 fail:
-	PqCommBusy = false;
-	return EOF;
+    emscripten_buffer_busy = false;
+    return EOF;
 }
 
 static void emscripten_putmessage_noblock(char msgtype, const char *s, size_t len) {
