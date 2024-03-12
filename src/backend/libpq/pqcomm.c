@@ -83,6 +83,10 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 /*
  * Cope with the various platform-specific ways to spell TCP keepalive socket
  * options.  This doesn't cover Windows, which as usual does its own thing.
@@ -149,11 +153,28 @@ static void socket_putmessage_noblock(char msgtype, const char *s, size_t len);
 static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 
+static void emscripten_comm_reset(void);
+static int	emscripten_flush(void);
+static int	emscripten_flush_if_writable(void);
+static bool	emscripten_is_send_pending(void);
+static int	emscripten_putmessage(char msgtype, const char *s, size_t len);
+static void	emscripten_putmessage_noblock(char msgtype, const char *s, size_t len);
+
 #ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath);
 static int	Setup_AF_UNIX(const char *sock_path);
 #endif							/* HAVE_UNIX_SOCKETS */
 
+#ifdef EMSCRIPTEN
+static const PQcommMethods PqCommSocketMethods = {
+	emscripten_comm_reset,
+	emscripten_flush,
+	emscripten_flush_if_writable,
+	emscripten_is_send_pending,
+	emscripten_putmessage,
+	emscripten_putmessage_noblock
+};
+#else
 static const PQcommMethods PqCommSocketMethods = {
 	socket_comm_reset,
 	socket_flush,
@@ -162,11 +183,90 @@ static const PQcommMethods PqCommSocketMethods = {
 	socket_putmessage,
 	socket_putmessage_noblock
 };
+#endif
 
 const PQcommMethods *PqCommMethods = &PqCommSocketMethods;
 
 WaitEventSet *FeBeWaitSet;
 
+
+/* --------------------------------
+ *		Emscripten implementation
+ * --------------------------------
+ */
+
+#ifdef EMSCRIPTEN
+EM_JS(void, emscripten_dispatch_result, (char *res, int len), {
+	// Dispatch the result to JS land
+	if (!Module.eventTarget) return;
+	var heapBytes = new Uint8Array(Module.HEAPU8.buffer, res, len);
+	var resultBytes = new Uint8Array(heapBytes);
+	Module.eventTarget.dispatchEvent(new Module.Event("result", { 
+		detail: resultBytes
+	}));
+});
+#endif
+
+static void emscripten_comm_reset(void) {
+    printf("emscripten_comm_reset");
+}
+
+static int emscripten_flush(void) {
+    printf("emscripten_flush");
+    return 0;
+}
+
+static int emscripten_flush_if_writable(void) {
+    printf("emscripten_flush_if_writable");
+    return 0;
+}
+
+static bool emscripten_is_send_pending(void) {
+    printf("emscripten_is_send_pending");
+    return false;
+}
+
+static int emscripten_putmessage(char msgtype, const char *s, size_t len) {
+	StringInfoData buf;
+	uint32		n32;
+
+	Assert(msgtype != 0);
+
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
+
+	// Initialize StringInfoData buffer
+	initStringInfo(&buf);
+
+	// Append msgtype
+	appendStringInfoChar(&buf, msgtype);
+
+	// Calculate message length (len + 4) and convert to network byte order
+	n32 = pg_hton32((uint32) (len + 4));
+	// Append length
+	appendBinaryStringInfo(&buf, (char *) &n32, 4);
+
+	// Append actual message
+	appendBinaryStringInfo(&buf, s, len);
+
+	// Dispatch the result
+	emscripten_dispatch_result(buf.data, buf.len);
+
+	// Free StringInfoData buffer memory
+	pfree(buf.data);
+
+	PqCommBusy = false;
+	return 0;
+
+fail:
+	PqCommBusy = false;
+	return EOF;
+}
+
+static void emscripten_putmessage_noblock(char msgtype, const char *s, size_t len) {
+	emscripten_putmessage(msgtype, s, len);
+}
 
 /* --------------------------------
  *		pq_init - initialize libpq at backend startup

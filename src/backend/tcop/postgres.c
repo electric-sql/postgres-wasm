@@ -93,7 +93,7 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebugJson;
+CommandDest whereToSendOutput = DestRemote;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -529,7 +529,7 @@ ReadCommand(StringInfo inBuf)
 	int			result;
 
 	if (whereToSendOutput == DestRemote)
-		result = SocketBackend(inBuf);
+		result = EmscriptenBackend(inBuf);
 	else if (whereToSendOutput == DestDebugJson)
 		result = EmscriptenBackend(inBuf);
 	else
