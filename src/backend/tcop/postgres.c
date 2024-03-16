@@ -315,8 +315,6 @@ InteractiveBackend(StringInfo inBuf)
  * Even though we are not reading from a "client" process, we still want to
  * respond to signals, particularly SIGTERM/SIGQUIT.
  */
-// FILE *query_in = NULL;
-
 static int
 interactive_getc(void)
 {
@@ -329,11 +327,6 @@ interactive_getc(void)
 	 * directly processes interrupts at this stage...
 	 */
 	CHECK_FOR_INTERRUPTS();
-
-	// if (!query_in) {
-	// 	printf("Reading query now\n");
-	// 	query_in = fopen("/Users/stas/datadir/q.sql","r");
-	// }
 
 	c = getc(stdin);
 
