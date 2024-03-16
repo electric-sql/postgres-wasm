@@ -657,7 +657,7 @@ PGSharedMemoryCreate(Size size,
 	struct stat statbuf;
 	Size		sysvsize;
 
-	elog(NOTICE, "! Hacky way to init shared memory");
+	elog(NOTICE, "Init WASM shared memory");
 
 	/* Initialize new segment. */
 	hdr = (PGShmemHeader *) malloc(size);
@@ -690,9 +690,6 @@ PGSharedMemoryCreate(Size size,
 		return hdr;
 	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
 	return (PGShmemHeader *) AnonymousShmem;
-
-
-
 
 	/*
 	 * We use the data directory's ID info (inode and device numbers) to

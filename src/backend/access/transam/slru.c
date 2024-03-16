@@ -1557,8 +1557,6 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 	int			segno;
 	int			segpage;
 
-	elog(LOG, "! SlruScanDirectory start %s, %s", getcwd(NULL, 100), ctl->Dir);
-
 	cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
@@ -1572,7 +1570,7 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 			segno = (int) strtol(clde->d_name, NULL, 16);
 			segpage = segno * SLRU_PAGES_PER_SEGMENT;
 
-			elog(LOG, "SlruScanDirectory invoking callback on %s/%s",
+			elog(DEBUG2, "SlruScanDirectory invoking callback on %s/%s",
 				 ctl->Dir, clde->d_name);
 			retval = callback(ctl, clde->d_name, segpage, data);
 			if (retval)
@@ -1580,8 +1578,6 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 		}
 	}
 	FreeDir(cldir);
-
-	elog(LOG, "! SlruScanDirectory stop");
 
 	return retval;
 }
