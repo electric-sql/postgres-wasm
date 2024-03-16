@@ -93,7 +93,11 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
+#ifdef EMSCRIPTEN
 CommandDest whereToSendOutput = DestRemote;
+#else
+CommandDest whereToSendOutput = DestDebug;
+#endif
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -521,12 +525,14 @@ ReadCommand(StringInfo inBuf)
 {
 	int			result;
 
+#ifdef EMSCRIPTEN
+	result = EmscriptenBackend(inBuf);
+#else
 	if (whereToSendOutput == DestRemote)
-		result = EmscriptenBackend(inBuf);
-	else if (whereToSendOutput == DestDebugJson)
-		result = EmscriptenBackend(inBuf);
+		result = SocketBackend(inBuf);
 	else
 		result = InteractiveBackend(inBuf);
+#endif
 	return result;
 }
 
