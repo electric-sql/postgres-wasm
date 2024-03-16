@@ -259,6 +259,10 @@ static int emscripten_putmessage(char msgtype, const char *s, size_t len) {
     appendBinaryStringInfo(&emscripten_buffer, s, len);
 
     emscripten_buffer_busy = false;
+
+	// Flush buffer on every message
+	emscripten_flush();
+
     return 0;
 
 fail:
