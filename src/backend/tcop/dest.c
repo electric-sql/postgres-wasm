@@ -77,11 +77,6 @@ static const DestReceiver debugtupDR = {
 	DestDebug
 };
 
-static const DestReceiver debugtup_jsonDR = {
-	debugtup_json, debugtup_json_startup, debugtup_json_shutdown, donothingCleanup,
-	DestDebugJson
-};
-
 static const DestReceiver printsimpleDR = {
 	printsimple, printsimple_startup, donothingCleanup, donothingCleanup,
 	DestRemoteSimple
@@ -136,9 +131,6 @@ CreateDestReceiver(CommandDest dest)
 
 		case DestDebug:
 			return unconstify(DestReceiver *, &debugtupDR);
-
-		case DestDebugJson:
-			return unconstify(DestReceiver *, &debugtup_jsonDR);
 
 		case DestSPI:
 			return unconstify(DestReceiver *, &spi_printtupDR);
@@ -208,7 +200,6 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 
 		case DestNone:
 		case DestDebug:
-		case DestDebugJson:
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:
@@ -254,7 +245,6 @@ NullCommand(CommandDest dest)
 
 		case DestNone:
 		case DestDebug:
-		case DestDebugJson:
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:
@@ -298,7 +288,6 @@ ReadyForQuery(CommandDest dest)
 
 		case DestNone:
 		case DestDebug:
-		case DestDebugJson:
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:

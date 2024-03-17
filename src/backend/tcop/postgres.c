@@ -93,11 +93,7 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-#ifdef EMSCRIPTEN
-CommandDest whereToSendOutput = DestRemote;
-#else
 CommandDest whereToSendOutput = DestDebug;
-#endif
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -525,14 +521,14 @@ ReadCommand(StringInfo inBuf)
 {
 	int			result;
 
-#ifdef EMSCRIPTEN
-	result = EmscriptenBackend(inBuf);
-#else
 	if (whereToSendOutput == DestRemote)
+#ifdef EMSCRIPTEN
+		result = EmscriptenBackend(inBuf);
+#else
 		result = SocketBackend(inBuf);
+#endif
 	else
 		result = InteractiveBackend(inBuf);
-#endif
 	return result;
 }
 
@@ -3748,6 +3744,10 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 		{
 			argv++;
 			argc--;
+#ifdef EMSCRIPTEN
+			/* We want to send output to the client using the wire protocol */
+			whereToSendOutput = DestRemote;
+#endif
 		}
 	}
 	else
