@@ -63,7 +63,7 @@ ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
 
 postgres: $(OBJS)
-	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -sALLOW_MEMORY_GROWTH=1 -sFORCE_FILESYSTEM=1 -lnodefs.js -lproxyfs.js -lidbfs.js -o $@
+	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -sMAIN_MODULE=2 -sALLOW_MEMORY_GROWTH=1 -sFORCE_FILESYSTEM=1 -lnodefs.js -lproxyfs.js -lidbfs.js -o $@
 
 endif
 endif
