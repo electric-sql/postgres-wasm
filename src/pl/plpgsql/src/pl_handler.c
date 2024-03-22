@@ -148,6 +148,7 @@ plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra)
 void
 EMSCRIPTEN_KEEPALIVE _PG_init(void)
 {
+	printf("PL/pgSQL initialization!!!!\n");
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
 

@@ -115,6 +115,7 @@ load_external_function(const char *filename, const char *funcname,
 	fullname = expand_dynamic_library_name(filename);
 
 	/* Load the shared library, unless we already did */
+	printf("load_external_function fullname: %s\n", fullname);
 	lib_handle = internal_load_library(fullname);
 
 	/* Return handle if caller wants it */
@@ -183,6 +184,7 @@ lookup_external_function(void *filehandle, const char *funcname)
 static void *
 internal_load_library(const char *libname)
 {
+	printf("internal_load_library libname: %s\n", libname);
 	DynamicFileList *file_scanner;
 	PGModuleMagicFunction magic_func;
 	char	   *load_error;
@@ -248,44 +250,47 @@ internal_load_library(const char *libname)
 							libname, load_error)));
 		}
 
-		/* Check the magic function to determine compatibility */
-		magic_func = (PGModuleMagicFunction)
-			dlsym(file_scanner->handle, PG_MAGIC_FUNCTION_NAME_STRING);
-		if (magic_func)
-		{
-			const Pg_magic_struct *magic_data_ptr = (*magic_func) ();
+		// /* Check the magic function to determine compatibility */
+		// magic_func = (PGModuleMagicFunction)
+		// 	dlsym(file_scanner->handle, PG_MAGIC_FUNCTION_NAME_STRING);
+		// if (magic_func)
+		// {
+		// 	const Pg_magic_struct *magic_data_ptr = (*magic_func) (); // Throws here!
 
-			if (magic_data_ptr->len != magic_data.len ||
-				memcmp(magic_data_ptr, &magic_data, magic_data.len) != 0)
-			{
-				/* copy data block before unlinking library */
-				Pg_magic_struct module_magic_data = *magic_data_ptr;
+		// 	if (magic_data_ptr->len != magic_data.len ||
+		// 		memcmp(magic_data_ptr, &magic_data, magic_data.len) != 0)
+		// 	{
+		// 		/* copy data block before unlinking library */
+		// 		Pg_magic_struct module_magic_data = *magic_data_ptr;
 
-				/* try to close library */
-				dlclose(file_scanner->handle);
-				free((char *) file_scanner);
+		// 		/* try to close library */
+		// 		dlclose(file_scanner->handle);
+		// 		free((char *) file_scanner);
 
-				/* issue suitable complaint */
-				incompatible_module_error(libname, &module_magic_data);
-			}
-		}
-		else
-		{
-			/* try to close library */
-			dlclose(file_scanner->handle);
-			free((char *) file_scanner);
-			/* complain */
-			ereport(ERROR,
-					(errmsg("incompatible library \"%s\": missing magic block",
-							libname),
-					 errhint("Extension libraries are required to use the PG_MODULE_MAGIC macro.")));
-		}
+		// 		/* issue suitable complaint */
+		// 		incompatible_module_error(libname, &module_magic_data);
+		// 	}
+		// }
+		// else
+		// {
+		// 	/* try to close library */
+		// 	dlclose(file_scanner->handle);
+		// 	free((char *) file_scanner);
+		// 	/* complain */
+		// 	ereport(ERROR,
+		// 			(errmsg("incompatible library \"%s\": missing magic block",
+		// 					libname),
+		// 			 errhint("Extension libraries are required to use the PG_MODULE_MAGIC macro.")));
+		// }
 
 		/*
 		 * If the library has a _PG_init() function, call it.
 		 */
+		printf("internal_load_library: find PG_init\n");
 		PG_init = (PG_init_t) dlsym(file_scanner->handle, "_PG_init");
+		printf("internal_load_library: find PG_init done, PG_init: %p\n", PG_init);
 		if (PG_init)
+			printf("internal_load_library: call PG_init\n");
 			(*PG_init) ();
 
 		/* OK to link it into list */

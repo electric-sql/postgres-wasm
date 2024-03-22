@@ -39,21 +39,30 @@
  * CurrentMemoryContext
  *		Default memory context for allocations.
  */
+EMSCRIPTEN_KEEPALIVE
 MemoryContext CurrentMemoryContext = NULL;
 
 /*
  * Standard top-level contexts. For a description of the purpose of each
  * of these contexts, refer to src/backend/utils/mmgr/README
  */
+EMSCRIPTEN_KEEPALIVE
 MemoryContext TopMemoryContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext ErrorContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext PostmasterContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext CacheMemoryContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext MessageContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext TopTransactionContext = NULL;
+EMSCRIPTEN_KEEPALIVE
 MemoryContext CurTransactionContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
+EMSCRIPTEN_KEEPALIVE
 MemoryContext PortalContext = NULL;
 
 static void MemoryContextCallResetCallbacks(MemoryContext context);

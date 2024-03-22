@@ -143,9 +143,13 @@ typedef struct ResourceOwnerData
  *	  GLOBAL MEMORY															 *
  *****************************************************************************/
 
+EMSCRIPTEN_KEEPALIVE
 ResourceOwner CurrentResourceOwner = NULL;
+EMSCRIPTEN_KEEPALIVE
 ResourceOwner CurTransactionResourceOwner = NULL;
+EMSCRIPTEN_KEEPALIVE
 ResourceOwner TopTransactionResourceOwner = NULL;
+EMSCRIPTEN_KEEPALIVE
 ResourceOwner AuxProcessResourceOwner = NULL;
 
 /*
