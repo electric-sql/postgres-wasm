@@ -36,6 +36,7 @@
 #include "storage/shmem.h"
 #include "utils/hsearch.h"
 
+#include "extensions/plpgsql.h"
 
 /* signatures for PostgreSQL-specific library init/fini functions */
 typedef void (*PG_init_t) (void);
@@ -90,6 +91,26 @@ static char *find_in_dynamic_libpath(const char *basename);
 static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
 
 
+/* PGlite static handling of extensions */
+
+bool plpgsql_loaded = false;
+
+typedef struct {
+    const char *name;
+    void *function;
+} func_map;
+
+static const func_map function_map[] = {
+    {"plpgsql_call_handler", plpgsql_call_handler},
+    {"plpgsql_inline_handler", plpgsql_inline_handler},
+    {"plpgsql_validator", plpgsql_validator},
+    {"pg_finfo_plpgsql_call_handler", pg_finfo_plpgsql_call_handler},
+    {"pg_finfo_plpgsql_inline_handler", pg_finfo_plpgsql_inline_handler},
+    {"pg_finfo_plpgsql_validator", pg_finfo_plpgsql_validator},
+    {NULL, NULL}
+};
+
+
 /*
  * Load the specified dynamic-link library file, and look for a function
  * named funcname in it.
@@ -107,6 +128,24 @@ void *
 load_external_function(const char *filename, const char *funcname,
 					   bool signalNotFound, void **filehandle)
 {
+	// printf("load_external_function - filename: %s, funcname: %s, signalNotFound: %d, filehandle: %p\n", filename, funcname, signalNotFound, filehandle);
+
+	/* PGlite static handling of extensions */
+	if (strcmp(filename, "$libdir/plpgsql") == 0)
+	{
+		if (!plpgsql_loaded)
+		{
+			plpgsql_PG_init();
+			plpgsql_loaded = true;
+		}
+
+		for (int i = 0; function_map[i].name != NULL; i++) {
+			if (strcmp(funcname, function_map[i].name) == 0) {
+				return function_map[i].function;
+			}
+		}
+	}
+
 	char	   *fullname;
 	void	   *lib_handle;
 	void	   *retval;
@@ -145,6 +184,19 @@ load_external_function(const char *filename, const char *funcname,
 void
 load_file(const char *filename, bool restricted)
 {
+	// printf("load_file - filename: %s, restricted: %d\n", filename, restricted);
+
+	/* PGlite static handling of extensions */
+	if (strcmp(filename, "$libdir/plpgsql") == 0)
+	{
+		if (!plpgsql_loaded)
+		{
+			plpgsql_PG_init();
+			plpgsql_loaded = true;
+		}
+		return;
+	}
+
 	char	   *fullname;
 
 	/* Apply security restriction if requested */
@@ -170,6 +222,15 @@ load_file(const char *filename, bool restricted)
 void *
 lookup_external_function(void *filehandle, const char *funcname)
 {
+	// printf("lookup_external_function - filehandle: %p, funcname: %s\n", filehandle, funcname);
+
+	/* PGlite static handling of extensions */
+	for (int i = 0; function_map[i].name != NULL; i++) {
+		if (strcmp(funcname, function_map[i].name) == 0) {
+			return function_map[i].function;
+		}
+	}
+
 	return dlsym(filehandle, funcname);
 }
 
@@ -453,6 +514,7 @@ internal_unload_library(const char *libname)
 static bool
 file_exists(const char *name)
 {
+	// printf("file_exists - name: %s\n", name);
 	struct stat st;
 
 	AssertArg(name != NULL);
