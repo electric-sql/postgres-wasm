@@ -65,6 +65,8 @@ static void json_categorize_type(Oid typoid,
 static void datum_to_json(Datum val, bool is_null, StringInfo result,
 						  JsonTypeCategory tcategory, Oid outfuncoid,
 						  bool key_scalar);
+static void add_json(Datum val, bool is_null, StringInfo result,
+					 Oid val_type, bool key_scalar);
 static text *catenate_stringinfo_string(StringInfo buffer, const char *addon);
 
 /*
@@ -630,7 +632,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
  * printed many times, avoid using this; better to do the json_categorize_type
  * lookups only once.
  */
-void
+static void
 add_json(Datum val, bool is_null, StringInfo result,
 		 Oid val_type, bool key_scalar)
 {

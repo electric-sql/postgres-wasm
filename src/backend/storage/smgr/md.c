@@ -746,9 +746,6 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 				 errhint("Check free disk space.")));
 	}
 
-	// printf("! writing block %u in file \"%s\"\n",
-	// 	blocknum, FilePathName(v->mdfd_vfd));
-
 	if (!skipFsync && !SmgrIsTemp(reln))
 		register_dirty_segment(reln, forknum, v);
 }

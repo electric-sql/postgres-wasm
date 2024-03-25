@@ -22,9 +22,9 @@
 #include <machine/vmparam.h>	/* for old BSD */
 #include <sys/exec.h>
 #endif
-// #if defined(__darwin__)
-// #include <crt_externs.h>
-// #endif
+#if defined(__darwin__) && !defined(EMSCRIPTEN)
+#include <crt_externs.h>
+#endif
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -230,14 +230,14 @@ save_ps_display_args(int argc, char **argv)
 		}
 		new_argv[argc] = NULL;
 
-// #if defined(__darwin__)
+#if defined(__darwin__) && !defined(EMSCRIPTEN)
 
-// 		/*
-// 		 * macOS (and perhaps other NeXT-derived platforms?) has a static copy
-// 		 * of the argv pointer, which we may fix like so:
-// 		 */
-// 		*_NSGetArgv() = new_argv;
-// #endif
+		/*
+		 * macOS (and perhaps other NeXT-derived platforms?) has a static copy
+		 * of the argv pointer, which we may fix like so:
+		 */
+		*_NSGetArgv() = new_argv;
+#endif
 
 		argv = new_argv;
 	}

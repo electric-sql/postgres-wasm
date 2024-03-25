@@ -2838,29 +2838,31 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 
-#ifndef WIN32
-					// passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
-					// if (pass == NULL)
-					// {
-					// 	if (passerr != 0)
-					// 		appendPQExpBuffer(&conn->errorMessage,
-					// 						  libpq_gettext("could not look up local user ID %d: %s\n"),
-					// 						  (int) uid,
-					// 						  strerror_r(passerr, sebuf, sizeof(sebuf)));
-					// 	else
-					// 		appendPQExpBuffer(&conn->errorMessage,
-					// 						  libpq_gettext("local user with ID %d does not exist\n"),
-					// 						  (int) uid);
-					// 	goto error_return;
-					// }
+#if defined(EMSCRIPTEN)
+					/* Noop */
+#elif !defined(WIN32)
+					passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
+					if (pass == NULL)
+					{
+						if (passerr != 0)
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("could not look up local user ID %d: %s\n"),
+											  (int) uid,
+											  strerror_r(passerr, sebuf, sizeof(sebuf)));
+						else
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("local user with ID %d does not exist\n"),
+											  (int) uid);
+						goto error_return;
+					}
 
-					// if (strcmp(pass->pw_name, conn->requirepeer) != 0)
-					// {
-					// 	appendPQExpBuffer(&conn->errorMessage,
-					// 					  libpq_gettext("requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"),
-					// 					  conn->requirepeer, pass->pw_name);
-					// 	goto error_return;
-					// }
+					if (strcmp(pass->pw_name, conn->requirepeer) != 0)
+					{
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"),
+										  conn->requirepeer, pass->pw_name);
+						goto error_return;
+					}
 #else							/* WIN32 */
 					/* should have failed with ENOSYS above */
 					Assert(false);

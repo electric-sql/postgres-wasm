@@ -93,7 +93,7 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestRemote;
+CommandDest whereToSendOutput = DestDebug;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -315,8 +315,6 @@ InteractiveBackend(StringInfo inBuf)
  * Even though we are not reading from a "client" process, we still want to
  * respond to signals, particularly SIGTERM/SIGQUIT.
  */
-// FILE *query_in = NULL;
-
 static int
 interactive_getc(void)
 {
@@ -329,11 +327,6 @@ interactive_getc(void)
 	 * directly processes interrupts at this stage...
 	 */
 	CHECK_FOR_INTERRUPTS();
-
-	// if (!query_in) {
-	// 	printf("Reading query now\n");
-	// 	query_in = fopen("/Users/stas/datadir/q.sql","r");
-	// }
 
 	c = getc(stdin);
 
@@ -529,9 +522,11 @@ ReadCommand(StringInfo inBuf)
 	int			result;
 
 	if (whereToSendOutput == DestRemote)
+#ifdef EMSCRIPTEN
 		result = EmscriptenBackend(inBuf);
-	else if (whereToSendOutput == DestDebugJson)
-		result = EmscriptenBackend(inBuf);
+#else
+		result = SocketBackend(inBuf);
+#endif
 	else
 		result = InteractiveBackend(inBuf);
 	return result;
@@ -3749,6 +3744,10 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 		{
 			argv++;
 			argc--;
+#ifdef EMSCRIPTEN
+			/* We want to send output to the client using the wire protocol */
+			whereToSendOutput = DestRemote;
+#endif
 		}
 	}
 	else

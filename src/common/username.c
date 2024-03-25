@@ -30,23 +30,25 @@
 const char *
 get_user_name(char **errstr)
 {
-#ifndef WIN32
+#if defined(EMSCRIPTEN)
+	return "pglite";
+#elif !defined(WIN32)
 	struct passwd *pw;
 	uid_t		user_id = geteuid();
 
 	*errstr = NULL;
 
-	// errno = 0;					/* clear errno before call */
-	// pw = getpwuid(user_id);
-	// if (!pw)
-	// {
-	// 	*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
-	// 					   (long) user_id,
-	// 					   errno ? strerror(errno) : _("user does not exist"));
-	// 	return NULL;
-	// }
+	errno = 0;					/* clear errno before call */
+	pw = getpwuid(user_id);
+	if (!pw)
+	{
+		*errstr = psprintf(_("could not look up effective user ID %ld: %s"),
+						   (long) user_id,
+						   errno ? strerror(errno) : _("user does not exist"));
+		return NULL;
+	}
 
-	return "stas";
+	return pw->pw_name;
 #else
 	/* Microsoft recommends buffer size of UNLEN+1, where UNLEN = 256 */
 	/* "static" variable remains after function exit */

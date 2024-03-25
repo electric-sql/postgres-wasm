@@ -88,7 +88,6 @@ typedef enum
 {
 	DestNone,					/* results are discarded */
 	DestDebug,					/* results go to debugging output */
-	DestDebugJson,				/* results go to debugging output as jsons */
 	DestRemote,					/* results sent to frontend process */
 	DestRemoteExecute,			/* sent to frontend, in Execute command */
 	DestRemoteSimple,			/* sent to frontend, w/no catalog access */
