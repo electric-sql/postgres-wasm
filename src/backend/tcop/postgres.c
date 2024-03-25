@@ -93,7 +93,7 @@
 const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebugJson;
+CommandDest whereToSendOutput = DestRemote;
 
 /* flag for logging end of session */
 bool		Log_disconnections = false;
@@ -351,15 +351,17 @@ interactive_getc(void)
 #ifdef EMSCRIPTEN
 EM_ASYNC_JS(char *, await_query, (), {
 	// Await a query from JS land
-	var event = new Module.Event("waiting");
-	Module.eventTarget.dispatchEvent(event);
+	Module.eventTarget.dispatchEvent(new Module.Event("waiting"));
 	var query = await new Promise((resolve, reject) => {
 		Module.eventTarget.addEventListener("query", (e) => {
 			resolve(e.detail);
 		}, {once: true});
 	});
-	var cstring_ptr = allocateUTF8(query);
-	return cstring_ptr;
+	// `query` is a Uint8Array containing the query in pg wire format
+	var bytes = query.length;
+	var ptr = _malloc(bytes);
+	Module.HEAPU8.set(query, ptr);
+	return ptr;
 });
 #endif
 
@@ -367,15 +369,18 @@ static int
 EmscriptenBackend(StringInfo inBuf)
 {
 	char *query = await_query();
-	char qtype = *query; // First character is qtype
-	int qlen = strlen(query);
+	char qtype = *query; // First byte is qtype
+
+    int32 msgLen = *((int32 *)(query + 1)); // Next 4 bytes are message length
+	msgLen = pg_ntoh32(msgLen);
+    int dataLen = msgLen - 4; // The rest of the message is the data
 
 	resetStringInfo(inBuf);
-	if (qlen > 1)
-	{
-		appendBinaryStringInfoNT(inBuf, query + 1, qlen - 1);
-		appendStringInfoChar(inBuf, (char) '\0');
-	}
+	if (dataLen > 0)
+    {
+		// Append the data to the buffer
+        appendBinaryStringInfo(inBuf, query + 5, dataLen);
+    }
 	
 	free(query);
 
@@ -524,7 +529,7 @@ ReadCommand(StringInfo inBuf)
 	int			result;
 
 	if (whereToSendOutput == DestRemote)
-		result = SocketBackend(inBuf);
+		result = EmscriptenBackend(inBuf);
 	else if (whereToSendOutput == DestDebugJson)
 		result = EmscriptenBackend(inBuf);
 	else
