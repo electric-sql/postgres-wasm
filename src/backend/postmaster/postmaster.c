@@ -1501,6 +1501,7 @@ getInstallationPaths(const char *argv0)
 	 */
 	get_pkglib_path(my_exec_path, pkglib_path);
 
+#ifndef EMSCRIPTEN
 	/*
 	 * Verify that there's a readable directory there; otherwise the Postgres
 	 * installation is incomplete or corrupt.  (A typical cause of this
@@ -1517,6 +1518,7 @@ getInstallationPaths(const char *argv0)
 				 errhint("This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location.",
 						 my_exec_path)));
 	FreeDir(pdir);
+#endif
 
 	/*
 	 * XXX is it worth similarly checking the share/ directory?  If the lib/

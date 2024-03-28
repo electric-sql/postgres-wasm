@@ -30,7 +30,9 @@
 const char *
 get_user_name(char **errstr)
 {
-#ifndef WIN32
+#if defined(EMSCRIPTEN)
+	return "pglite";
+#elif !defined(WIN32)
 	struct passwd *pw;
 	uid_t		user_id = geteuid();
 

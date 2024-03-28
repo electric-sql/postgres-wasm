@@ -98,6 +98,8 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 {
 	int			semId;
 
+	return 42;
+
 	semId = semget(semKey, numSems, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 	if (semId < 0)
@@ -147,6 +149,8 @@ IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum, int value)
 {
 	union semun semun;
 
+	return;
+
 	semun.val = value;
 	if (semctl(semId, semNum, SETVAL, semun) < 0)
 	{
@@ -170,6 +174,8 @@ IpcSemaphoreKill(IpcSemaphoreId semId)
 {
 	union semun semun;
 
+	return;
+
 	semun.val = 0;				/* unused, but keep compiler quiet */
 
 	if (semctl(semId, 0, IPC_RMID, semun) < 0)
@@ -182,6 +188,8 @@ IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum)
 {
 	union semun dummy;			/* for Solaris */
 
+	return 0;
+
 	dummy.val = 0;				/* unused */
 
 	return semctl(semId, semNum, GETVAL, dummy);
@@ -192,6 +200,8 @@ static pid_t
 IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum)
 {
 	union semun dummy;			/* for Solaris */
+
+	return 42;
 
 	dummy.val = 0;				/* unused */
 
@@ -214,6 +224,8 @@ IpcSemaphoreCreate(int numSems)
 	IpcSemaphoreId semId;
 	union semun semun;
 	PGSemaphoreData mysema;
+
+	return 42;
 
 	/* Loop till we find a free IPC key */
 	for (nextSemaKey++;; nextSemaKey++)
@@ -314,6 +326,7 @@ void
 PGReserveSemaphores(int maxSemas)
 {
 	struct stat statbuf;
+	return;
 
 	/*
 	 * We use the data directory's inode number to seed the search for free
@@ -359,6 +372,8 @@ ReleaseSemaphores(int status, Datum arg)
 {
 	int			i;
 
+	return;
+
 	for (i = 0; i < numSemaSets; i++)
 		IpcSemaphoreKill(mySemaSets[i]);
 	free(mySemaSets);
@@ -373,6 +388,7 @@ PGSemaphore
 PGSemaphoreCreate(void)
 {
 	PGSemaphore sema;
+	return sema;
 
 	/* Can't do this in a backend, because static state is postmaster's */
 	Assert(!IsUnderPostmaster);
@@ -407,6 +423,7 @@ PGSemaphoreCreate(void)
 void
 PGSemaphoreReset(PGSemaphore sema)
 {
+	return;
 	IpcSemaphoreInitialize(sema->semId, sema->semNum, 0);
 }
 
@@ -420,6 +437,8 @@ PGSemaphoreLock(PGSemaphore sema)
 {
 	int			errStatus;
 	struct sembuf sops;
+
+	return;
 
 	sops.sem_op = -1;			/* decrement */
 	sops.sem_flg = 0;
@@ -454,6 +473,8 @@ PGSemaphoreUnlock(PGSemaphore sema)
 	int			errStatus;
 	struct sembuf sops;
 
+	return;
+
 	sops.sem_op = 1;			/* increment */
 	sops.sem_flg = 0;
 	sops.sem_num = sema->semNum;
@@ -483,6 +504,8 @@ PGSemaphoreTryLock(PGSemaphore sema)
 {
 	int			errStatus;
 	struct sembuf sops;
+
+	return true;
 
 	sops.sem_op = -1;			/* decrement */
 	sops.sem_flg = IPC_NOWAIT;	/* but don't block */

@@ -60,6 +60,8 @@
 #include "storage/shmem.h"
 #include "utils/memutils.h"
 
+#define WAIT_USE_POLL 1
+
 /*
  * Select the fd readiness primitive to use. Normally the "most modern"
  * primitive supported by the OS will be used, but for testing it can be

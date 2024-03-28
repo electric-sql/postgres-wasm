@@ -42,6 +42,9 @@
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
 
 const char *progname;
 
@@ -366,6 +369,8 @@ help(const char *progname)
 static void
 check_root(const char *progname)
 {
+	return;
+
 #ifndef WIN32
 	if (geteuid() == 0)
 	{

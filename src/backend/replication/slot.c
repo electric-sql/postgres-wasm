@@ -1328,6 +1328,8 @@ CheckPointReplicationSlots(void)
 {
 	int			i;
 
+	return;
+
 	elog(DEBUG1, "performing replication slot checkpoint");
 
 	/*

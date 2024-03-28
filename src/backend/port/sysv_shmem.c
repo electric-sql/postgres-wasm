@@ -657,6 +657,40 @@ PGSharedMemoryCreate(Size size,
 	struct stat statbuf;
 	Size		sysvsize;
 
+	elog(NOTICE, "Init WASM shared memory");
+
+	/* Initialize new segment. */
+	hdr = (PGShmemHeader *) malloc(size);
+	hdr->creatorPID = getpid();
+	hdr->magic = PGShmemMagic;
+	hdr->dsm_control = 0;
+
+	/* Fill in the data directory ID info, too */
+	hdr->device = statbuf.st_dev;
+	hdr->inode = statbuf.st_ino;
+
+	/*
+	 * Initialize space allocation status for segment.
+	 */
+	hdr->totalsize = size;
+	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	*shim = hdr;
+
+	/* Save info for possible future use */
+	UsedShmemSegAddr = memAddress;
+	UsedShmemSegID = (unsigned long) NextShmemSegID;
+
+	/*
+	 * If AnonymousShmem is NULL here, then we're not using anonymous shared
+	 * memory, and should return a pointer to the System V shared memory
+	 * block. Otherwise, the System V shared memory block is only a shim, and
+	 * we must return a pointer to the real block.
+	 */
+	if (AnonymousShmem == NULL)
+		return hdr;
+	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
+	return (PGShmemHeader *) AnonymousShmem;
+
 	/*
 	 * We use the data directory's ID info (inode and device numbers) to
 	 * positively identify shmem segments associated with this data dir, and

@@ -138,7 +138,7 @@
 /*
  * Define this if your operating system supports link()
  */
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32) && !defined(__CYGWIN__) && !defined(EMSCRIPTEN)
 #define HAVE_WORKING_LINK 1
 #endif
 
