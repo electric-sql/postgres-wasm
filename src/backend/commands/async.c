@@ -144,6 +144,9 @@
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
 
 /*
  * Maximum size of a NOTIFY payload, including terminating NULL.  This
@@ -1675,6 +1678,12 @@ SignalBackends(void)
 	int32	   *pids;
 	BackendId  *ids;
 	int			count;
+
+	#ifdef EMSCRIPTEN
+	// With PGlite we call HandleNotifyInterrupt() directly
+	HandleNotifyInterrupt();
+	return;
+	#endif
 
 	/*
 	 * Identify backends that we need to signal.  We don't want to send
