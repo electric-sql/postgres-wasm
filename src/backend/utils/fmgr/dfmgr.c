@@ -37,6 +37,7 @@
 #include "utils/hsearch.h"
 
 #include "extensions/plpgsql.h"
+#include "extensions/pgvector.h"
 
 /* signatures for PostgreSQL-specific library init/fini functions */
 typedef void (*PG_init_t) (void);
@@ -110,6 +111,222 @@ static const func_map function_map[] = {
     {NULL, NULL}
 };
 
+bool pgvector_loaded = false;
+static const func_map pgvector_func_map[] = {
+	{"sparsevec_in", sparsevec_in},
+	{"pg_finfo_sparsevec_in", pg_finfo_sparsevec_in},
+	{"sparsevec_out", sparsevec_out},
+	{"pg_finfo_sparsevec_out", pg_finfo_sparsevec_out},
+	{"sparsevec_typmod_in", sparsevec_typmod_in},
+	{"pg_finfo_sparsevec_typmod_in", pg_finfo_sparsevec_typmod_in},
+	{"sparsevec_recv", sparsevec_recv},
+	{"pg_finfo_sparsevec_recv", pg_finfo_sparsevec_recv},
+	{"sparsevec_send", sparsevec_send},
+	{"pg_finfo_sparsevec_send", pg_finfo_sparsevec_send},
+	{"sparsevec", sparsevec},
+	{"pg_finfo_sparsevec", pg_finfo_sparsevec},
+	{"vector_to_sparsevec", vector_to_sparsevec},
+	{"pg_finfo_vector_to_sparsevec", pg_finfo_vector_to_sparsevec},
+	{"halfvec_to_sparsevec", halfvec_to_sparsevec},
+	{"pg_finfo_halfvec_to_sparsevec", pg_finfo_halfvec_to_sparsevec},
+	{"sparsevec_l2_distance", sparsevec_l2_distance},
+	{"pg_finfo_sparsevec_l2_distance", pg_finfo_sparsevec_l2_distance},
+	{"sparsevec_l2_squared_distance", sparsevec_l2_squared_distance},
+	{"pg_finfo_sparsevec_l2_squared_distance", pg_finfo_sparsevec_l2_squared_distance},
+	{"sparsevec_inner_product", sparsevec_inner_product},
+	{"pg_finfo_sparsevec_inner_product", pg_finfo_sparsevec_inner_product},
+	{"sparsevec_negative_inner_product", sparsevec_negative_inner_product},
+	{"pg_finfo_sparsevec_negative_inner_product", pg_finfo_sparsevec_negative_inner_product},
+	{"sparsevec_cosine_distance", sparsevec_cosine_distance},
+	{"pg_finfo_sparsevec_cosine_distance", pg_finfo_sparsevec_cosine_distance},
+	{"sparsevec_l1_distance", sparsevec_l1_distance},
+	{"pg_finfo_sparsevec_l1_distance", pg_finfo_sparsevec_l1_distance},
+	{"sparsevec_l2_norm", sparsevec_l2_norm},
+	{"pg_finfo_sparsevec_l2_norm", pg_finfo_sparsevec_l2_norm},
+	{"sparsevec_l2_normalize", sparsevec_l2_normalize},
+	{"pg_finfo_sparsevec_l2_normalize", pg_finfo_sparsevec_l2_normalize},
+	{"sparsevec_lt", sparsevec_lt},
+	{"pg_finfo_sparsevec_lt", pg_finfo_sparsevec_lt},
+	{"sparsevec_le", sparsevec_le},
+	{"pg_finfo_sparsevec_le", pg_finfo_sparsevec_le},
+	{"sparsevec_eq", sparsevec_eq},
+	{"pg_finfo_sparsevec_eq", pg_finfo_sparsevec_eq},
+	{"sparsevec_ne", sparsevec_ne},
+	{"pg_finfo_sparsevec_ne", pg_finfo_sparsevec_ne},
+	{"sparsevec_ge", sparsevec_ge},
+	{"pg_finfo_sparsevec_ge", pg_finfo_sparsevec_ge},
+	{"sparsevec_gt", sparsevec_gt},
+	{"pg_finfo_sparsevec_gt", pg_finfo_sparsevec_gt},
+	{"sparsevec_cmp", sparsevec_cmp},
+	{"pg_finfo_sparsevec_cmp", pg_finfo_sparsevec_cmp},
+	{"hamming_distance", hamming_distance},
+	{"pg_finfo_hamming_distance", pg_finfo_hamming_distance},
+	{"jaccard_distance", jaccard_distance},
+	{"pg_finfo_jaccard_distance", pg_finfo_jaccard_distance},
+	{"vector_in", vector_in},
+	{"pg_finfo_vector_in", pg_finfo_vector_in},
+	{"vector_out", vector_out},
+	{"pg_finfo_vector_out", pg_finfo_vector_out},
+	{"vector_typmod_in", vector_typmod_in},
+	{"pg_finfo_vector_typmod_in", pg_finfo_vector_typmod_in},
+	{"vector_recv", vector_recv},
+	{"pg_finfo_vector_recv", pg_finfo_vector_recv},
+	{"vector_send", vector_send},
+	{"pg_finfo_vector_send", pg_finfo_vector_send},
+	{"vector", vector},
+	{"pg_finfo_vector", pg_finfo_vector},
+	{"array_to_vector", array_to_vector},
+	{"pg_finfo_array_to_vector", pg_finfo_array_to_vector},
+	{"vector_to_float4", vector_to_float4},
+	{"pg_finfo_vector_to_float4", pg_finfo_vector_to_float4},
+	{"halfvec_to_vector", halfvec_to_vector},
+	{"pg_finfo_halfvec_to_vector", pg_finfo_halfvec_to_vector},
+	{"l2_distance", l2_distance},
+	{"pg_finfo_l2_distance", pg_finfo_l2_distance},
+	{"vector_l2_squared_distance", vector_l2_squared_distance},
+	{"pg_finfo_vector_l2_squared_distance", pg_finfo_vector_l2_squared_distance},
+	{"inner_product", inner_product},
+	{"pg_finfo_inner_product", pg_finfo_inner_product},
+	{"vector_negative_inner_product", vector_negative_inner_product},
+	{"pg_finfo_vector_negative_inner_product", pg_finfo_vector_negative_inner_product},
+	{"cosine_distance", cosine_distance},
+	{"pg_finfo_cosine_distance", pg_finfo_cosine_distance},
+	{"vector_spherical_distance", vector_spherical_distance},
+	{"pg_finfo_vector_spherical_distance", pg_finfo_vector_spherical_distance},
+	{"l1_distance", l1_distance},
+	{"pg_finfo_l1_distance", pg_finfo_l1_distance},
+	{"vector_dims", vector_dims},
+	{"pg_finfo_vector_dims", pg_finfo_vector_dims},
+	{"vector_norm", vector_norm},
+	{"pg_finfo_vector_norm", pg_finfo_vector_norm},
+	{"l2_normalize", l2_normalize},
+	{"pg_finfo_l2_normalize", pg_finfo_l2_normalize},
+	{"vector_add", vector_add},
+	{"pg_finfo_vector_add", pg_finfo_vector_add},
+	{"vector_sub", vector_sub},
+	{"pg_finfo_vector_sub", pg_finfo_vector_sub},
+	{"vector_mul", vector_mul},
+	{"pg_finfo_vector_mul", pg_finfo_vector_mul},
+	{"vector_concat", vector_concat},
+	{"pg_finfo_vector_concat", pg_finfo_vector_concat},
+	{"binary_quantize", binary_quantize},
+	{"pg_finfo_binary_quantize", pg_finfo_binary_quantize},
+	{"subvector", subvector},
+	{"pg_finfo_subvector", pg_finfo_subvector},
+	{"vector_lt", vector_lt},
+	{"pg_finfo_vector_lt", pg_finfo_vector_lt},
+	{"vector_le", vector_le},
+	{"pg_finfo_vector_le", pg_finfo_vector_le},
+	{"vector_eq", vector_eq},
+	{"pg_finfo_vector_eq", pg_finfo_vector_eq},
+	{"vector_ne", vector_ne},
+	{"pg_finfo_vector_ne", pg_finfo_vector_ne},
+	{"vector_ge", vector_ge},
+	{"pg_finfo_vector_ge", pg_finfo_vector_ge},
+	{"vector_gt", vector_gt},
+	{"pg_finfo_vector_gt", pg_finfo_vector_gt},
+	{"vector_cmp", vector_cmp},
+	{"pg_finfo_vector_cmp", pg_finfo_vector_cmp},
+	{"vector_accum", vector_accum},
+	{"pg_finfo_vector_accum", pg_finfo_vector_accum},
+	{"vector_combine", vector_combine},
+	{"pg_finfo_vector_combine", pg_finfo_vector_combine},
+	{"vector_avg", vector_avg},
+	{"pg_finfo_vector_avg", pg_finfo_vector_avg},
+	{"sparsevec_to_vector", sparsevec_to_vector},
+	{"pg_finfo_sparsevec_to_vector", pg_finfo_sparsevec_to_vector},
+	{"ivfflathandler", ivfflathandler},
+	{"pg_finfo_ivfflathandler", pg_finfo_ivfflathandler},
+	{"halfvec_in", halfvec_in},
+	{"pg_finfo_halfvec_in", pg_finfo_halfvec_in},
+	{"halfvec_out", halfvec_out},
+	{"pg_finfo_halfvec_out", pg_finfo_halfvec_out},
+	{"halfvec_typmod_in", halfvec_typmod_in},
+	{"pg_finfo_halfvec_typmod_in", pg_finfo_halfvec_typmod_in},
+	{"halfvec_recv", halfvec_recv},
+	{"pg_finfo_halfvec_recv", pg_finfo_halfvec_recv},
+	{"halfvec_send", halfvec_send},
+	{"pg_finfo_halfvec_send", pg_finfo_halfvec_send},
+	{"halfvec", halfvec},
+	{"pg_finfo_halfvec", pg_finfo_halfvec},
+	{"array_to_halfvec", array_to_halfvec},
+	{"pg_finfo_array_to_halfvec", pg_finfo_array_to_halfvec},
+	{"halfvec_to_float4", halfvec_to_float4},
+	{"pg_finfo_halfvec_to_float4", pg_finfo_halfvec_to_float4},
+	{"vector_to_halfvec", vector_to_halfvec},
+	{"pg_finfo_vector_to_halfvec", pg_finfo_vector_to_halfvec},
+	{"halfvec_l2_distance", halfvec_l2_distance},
+	{"pg_finfo_halfvec_l2_distance", pg_finfo_halfvec_l2_distance},
+	{"halfvec_l2_squared_distance", halfvec_l2_squared_distance},
+	{"pg_finfo_halfvec_l2_squared_distance", pg_finfo_halfvec_l2_squared_distance},
+	{"halfvec_inner_product", halfvec_inner_product},
+	{"pg_finfo_halfvec_inner_product", pg_finfo_halfvec_inner_product},
+	{"halfvec_negative_inner_product", halfvec_negative_inner_product},
+	{"pg_finfo_halfvec_negative_inner_product", pg_finfo_halfvec_negative_inner_product},
+	{"halfvec_cosine_distance", halfvec_cosine_distance},
+	{"pg_finfo_halfvec_cosine_distance", pg_finfo_halfvec_cosine_distance},
+	{"halfvec_spherical_distance", halfvec_spherical_distance},
+	{"pg_finfo_halfvec_spherical_distance", pg_finfo_halfvec_spherical_distance},
+	{"halfvec_l1_distance", halfvec_l1_distance},
+	{"pg_finfo_halfvec_l1_distance", pg_finfo_halfvec_l1_distance},
+	{"halfvec_vector_dims", halfvec_vector_dims},
+	{"pg_finfo_halfvec_vector_dims", pg_finfo_halfvec_vector_dims},
+	{"halfvec_l2_norm", halfvec_l2_norm},
+	{"pg_finfo_halfvec_l2_norm", pg_finfo_halfvec_l2_norm},
+	{"halfvec_l2_normalize", halfvec_l2_normalize},
+	{"pg_finfo_halfvec_l2_normalize", pg_finfo_halfvec_l2_normalize},
+	{"halfvec_add", halfvec_add},
+	{"pg_finfo_halfvec_add", pg_finfo_halfvec_add},
+	{"halfvec_sub", halfvec_sub},
+	{"pg_finfo_halfvec_sub", pg_finfo_halfvec_sub},
+	{"halfvec_mul", halfvec_mul},
+	{"pg_finfo_halfvec_mul", pg_finfo_halfvec_mul},
+	{"halfvec_concat", halfvec_concat},
+	{"pg_finfo_halfvec_concat", pg_finfo_halfvec_concat},
+	{"halfvec_binary_quantize", halfvec_binary_quantize},
+	{"pg_finfo_halfvec_binary_quantize", pg_finfo_halfvec_binary_quantize},
+	{"halfvec_subvector", halfvec_subvector},
+	{"pg_finfo_halfvec_subvector", pg_finfo_halfvec_subvector},
+	{"halfvec_lt", halfvec_lt},
+	{"pg_finfo_halfvec_lt", pg_finfo_halfvec_lt},
+	{"halfvec_le", halfvec_le},
+	{"pg_finfo_halfvec_le", pg_finfo_halfvec_le},
+	{"halfvec_eq", halfvec_eq},
+	{"pg_finfo_halfvec_eq", pg_finfo_halfvec_eq},
+	{"halfvec_ne", halfvec_ne},
+	{"pg_finfo_halfvec_ne", pg_finfo_halfvec_ne},
+	{"halfvec_ge", halfvec_ge},
+	{"pg_finfo_halfvec_ge", pg_finfo_halfvec_ge},
+	{"halfvec_gt", halfvec_gt},
+	{"pg_finfo_halfvec_gt", pg_finfo_halfvec_gt},
+	{"halfvec_cmp", halfvec_cmp},
+	{"pg_finfo_halfvec_cmp", pg_finfo_halfvec_cmp},
+	{"halfvec_accum", halfvec_accum},
+	{"pg_finfo_halfvec_accum", pg_finfo_halfvec_accum},
+	{"halfvec_avg", halfvec_avg},
+	{"pg_finfo_halfvec_avg", pg_finfo_halfvec_avg},
+	{"sparsevec_to_halfvec", sparsevec_to_halfvec},
+	{"pg_finfo_sparsevec_to_halfvec", pg_finfo_sparsevec_to_halfvec},
+	{"l2_normalize", l2_normalize},
+	{"halfvec_l2_normalize", halfvec_l2_normalize},
+	{"sparsevec_l2_normalize", sparsevec_l2_normalize},
+	{"ivfflat_halfvec_support", ivfflat_halfvec_support},
+	{"pg_finfo_ivfflat_halfvec_support", pg_finfo_ivfflat_halfvec_support},
+	{"ivfflat_bit_support", ivfflat_bit_support},
+	{"pg_finfo_ivfflat_bit_support", pg_finfo_ivfflat_bit_support},
+	{"hnswhandler", hnswhandler},
+	{"pg_finfo_hnswhandler", pg_finfo_hnswhandler},
+	{"l2_normalize", l2_normalize},
+	{"halfvec_l2_normalize", halfvec_l2_normalize},
+	{"sparsevec_l2_normalize", sparsevec_l2_normalize},
+	{"hnsw_halfvec_support", hnsw_halfvec_support},
+	{"pg_finfo_hnsw_halfvec_support", pg_finfo_hnsw_halfvec_support},
+	{"hnsw_bit_support", hnsw_bit_support},
+	{"pg_finfo_hnsw_bit_support", pg_finfo_hnsw_bit_support},
+	{"hnsw_sparsevec_support", hnsw_sparsevec_support},
+	{"pg_finfo_hnsw_sparsevec_support", pg_finfo_hnsw_sparsevec_support},	
+	{NULL, NULL},
+};
 
 /*
  * Load the specified dynamic-link library file, and look for a function
@@ -142,6 +359,20 @@ load_external_function(const char *filename, const char *funcname,
 		for (int i = 0; function_map[i].name != NULL; i++) {
 			if (strcmp(funcname, function_map[i].name) == 0) {
 				return function_map[i].function;
+			}
+		}
+	}
+
+	/* PGVector Static Dispatch */
+	if (strcmp(filename, "$libdir/vector") == 0) {
+		if (!pgvector_loaded) {
+			_PG_init();
+			pgvector_loaded = true;
+		}
+
+		for (int i = 0; pgvector_func_map[i].name != NULL; i++) {
+			if (strcmp(funcname, pgvector_func_map[i].name) == 0) {
+				return pgvector_func_map[i].function;
 			}
 		}
 	}
@@ -196,6 +427,13 @@ load_file(const char *filename, bool restricted)
 		}
 		return;
 	}
+	if (strcmp(filename, "$libdir/vector") == 0) {
+		if (!pgvector_loaded) {
+			_PG_init();
+			pgvector_loaded = true;
+		}
+		return;
+	}
 
 	char	   *fullname;
 
@@ -228,6 +466,12 @@ lookup_external_function(void *filehandle, const char *funcname)
 	for (int i = 0; function_map[i].name != NULL; i++) {
 		if (strcmp(funcname, function_map[i].name) == 0) {
 			return function_map[i].function;
+		}
+	}
+
+	for (int i = 0; pgvector_func_map[i].name != NULL; i++) {
+		if (strcmp(funcname, pgvector_func_map[i].name) == 0) {
+			return pgvector_func_map[i].function;
 		}
 	}
 

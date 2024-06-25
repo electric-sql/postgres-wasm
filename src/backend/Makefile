@@ -70,6 +70,26 @@ OBJS += \
 	$(top_builddir)/src/pl/plpgsql/src/pl_handler.o \
 	$(top_builddir)/src/pl/plpgsql/src/pl_scanner.o
 
+OBJS += \
+	$(top_builddir)/../pg_ext/pgvector/src/bitutils.o \
+	$(top_builddir)/../pg_ext/pgvector/src/bitvec.o \
+	$(top_builddir)/../pg_ext/pgvector/src/halfutils.o \
+	$(top_builddir)/../pg_ext/pgvector/src/halfvec.o \
+	$(top_builddir)/../pg_ext/pgvector/src/hnsw.o \
+	$(top_builddir)/../pg_ext/pgvector/src/hnswbuild.o \
+	$(top_builddir)/../pg_ext/pgvector/src/hnswscan.o \
+	$(top_builddir)/../pg_ext/pgvector/src/hnswutils.o \
+	$(top_builddir)/../pg_ext/pgvector/src/hnswvacuum.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfbuild.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfflat.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfinsert.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfkmeans.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfscan.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfutils.o \
+	$(top_builddir)/../pg_ext/pgvector/src/ivfvacuum.o \
+	$(top_builddir)/../pg_ext/pgvector/src/sparsevec.o \
+	$(top_builddir)/../pg_ext/pgvector/src/vector.o
+
 postgres: $(OBJS)
 	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -sALLOW_MEMORY_GROWTH=1 -sFORCE_FILESYSTEM=1 -lnodefs.js -lproxyfs.js -lidbfs.js -o $@
 

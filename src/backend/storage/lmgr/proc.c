@@ -456,7 +456,7 @@ InitProcess(void)
 	 * be careful and reinitialize its value here.  (This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
-	PGSemaphoreReset(MyProc->sem);
+	// PGSemaphoreReset(MyProc->sem); // caused process to hang for some reason
 
 	/*
 	 * Arrange to clean up at backend exit.
@@ -468,6 +468,7 @@ InitProcess(void)
 	 * local state needed for LWLocks, and the deadlock checker.
 	 */
 	InitLWLockAccess();
+
 	InitDeadLockChecking();
 }
 
