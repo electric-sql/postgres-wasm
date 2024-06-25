@@ -152,6 +152,8 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	uint32		maxitems;
 	Size		segsize;
 
+	return;
+
 	Assert(!IsUnderPostmaster);
 
 	/*
@@ -293,6 +295,8 @@ dsm_cleanup_for_mmap(void)
 {
 	DIR		   *dir;
 	struct dirent *dent;
+
+	return;
 
 	/* Scan the directory for something with a name of the correct format. */
 	dir = AllocateDir(PG_DYNSHMEM_DIR);

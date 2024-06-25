@@ -27,6 +27,10 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);
 static void plpgsql_extra_warnings_assign_hook(const char *newvalue, void *extra);
 static void plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra);
@@ -141,8 +145,8 @@ plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra)
  *
  * DO NOT make this static nor change its name!
  */
-void
-_PG_init(void)
+extern void EMSCRIPTEN_KEEPALIVE
+plpgsql_PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
@@ -218,7 +222,7 @@ _PG_init(void)
  */
 PG_FUNCTION_INFO_V1(plpgsql_call_handler);
 
-Datum
+extern Datum EMSCRIPTEN_KEEPALIVE
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
 	bool		nonatomic;
@@ -311,7 +315,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
  */
 PG_FUNCTION_INFO_V1(plpgsql_inline_handler);
 
-Datum
+extern Datum EMSCRIPTEN_KEEPALIVE
 plpgsql_inline_handler(PG_FUNCTION_ARGS)
 {
 	LOCAL_FCINFO(fake_fcinfo, 0);
@@ -438,7 +442,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
  */
 PG_FUNCTION_INFO_V1(plpgsql_validator);
 
-Datum
+extern Datum EMSCRIPTEN_KEEPALIVE
 plpgsql_validator(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);

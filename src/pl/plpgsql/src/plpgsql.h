@@ -23,6 +23,8 @@
 #include "utils/expandedrecord.h"
 #include "utils/typcache.h"
 
+#define PLPGSQL_INFO_DEF
+#include "extensions/plpgsql.h"
 
 /**********************************************************************
  * Definitions

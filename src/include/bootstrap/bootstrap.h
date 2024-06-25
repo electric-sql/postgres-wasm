@@ -55,6 +55,7 @@ extern void boot_get_type_io_data(Oid typid,
 								  Oid *typoutput);
 
 extern int	boot_yyparse(void);
+void boot_yyset_in (FILE *  in_str );
 
 extern int	boot_yylex(void);
 extern void boot_yyerror(const char *str) pg_attribute_noreturn();

@@ -16,11 +16,11 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_srcdir)/src/include/snowball \
 	-I$(top_srcdir)/src/include/snowball/libstemmer $(CPPFLAGS)
 
-OBJS = \
-	$(WIN32RES) \
-	api.o \
-	dict_snowball.o \
-	utilities.o
+# OBJS = \
+# 	$(WIN32RES) \
+# 	api.o \
+# 	dict_snowball.o \
+# 	utilities.o
 
 OBJS += \
 	stem_ISO_8859_1_basque.o \
@@ -115,7 +115,7 @@ VPATH += $(srcdir)/libstemmer
 NAME := dict_snowball
 rpath =
 
-all: all-shared-lib $(SQLSCRIPT)
+all: # all-shared-lib $(SQLSCRIPT)
 
 include $(top_srcdir)/src/Makefile.shlib
 

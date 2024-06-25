@@ -2838,7 +2838,9 @@ keep_going:						/* We will come back to here until there is
 						goto error_return;
 					}
 
-#ifndef WIN32
+#if defined(EMSCRIPTEN)
+					/* Noop */
+#elif !defined(WIN32)
 					passerr = pqGetpwuid(uid, &pass_buf, pwdbuf, sizeof(pwdbuf), &pass);
 					if (pass == NULL)
 					{

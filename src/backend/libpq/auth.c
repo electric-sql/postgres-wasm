@@ -1864,6 +1864,9 @@ ident_inet_done:
 static int
 auth_peer(hbaPort *port)
 {
+
+	return STATUS_OK;
+
 	uid_t		uid;
 	gid_t		gid;
 #ifndef WIN32

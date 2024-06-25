@@ -1124,7 +1124,9 @@ pg_fe_getauthname(PQExpBuffer errorMessage)
 	 */
 	pglock_thread();
 
-#ifdef WIN32
+#if defined(EMSCRIPTEN)
+	name = "pglite";
+#elif defined(WIN32)
 	if (GetUserName(username, &namesize))
 		name = username;
 	else if (errorMessage)

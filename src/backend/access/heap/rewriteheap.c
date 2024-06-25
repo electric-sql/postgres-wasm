@@ -1197,6 +1197,8 @@ CheckPointLogicalRewriteHeap(void)
 	struct dirent *mapping_de;
 	char		path[MAXPGPATH + 20];
 
+	return;
+
 	/*
 	 * We start of with a minimum of the last redo pointer. No new decoding
 	 * slot will start before that, so that's a safe upper bound for removal.

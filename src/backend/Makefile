@@ -62,8 +62,16 @@ ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
 
+OBJS += \
+	$(top_builddir)/src/pl/plpgsql/src/pl_comp.o \
+	$(top_builddir)/src/pl/plpgsql/src/pl_exec.o \
+	$(top_builddir)/src/pl/plpgsql/src/pl_funcs.o \
+	$(top_builddir)/src/pl/plpgsql/src/pl_gram.o \
+	$(top_builddir)/src/pl/plpgsql/src/pl_handler.o \
+	$(top_builddir)/src/pl/plpgsql/src/pl_scanner.o
+
 postgres: $(OBJS)
-	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(export_dynamic) $(LIBS) -sALLOW_MEMORY_GROWTH=1 -sFORCE_FILESYSTEM=1 -lnodefs.js -lproxyfs.js -lidbfs.js -o $@
 
 endif
 endif

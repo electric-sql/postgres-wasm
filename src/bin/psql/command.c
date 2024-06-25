@@ -553,7 +553,9 @@ exec_command_cd(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			dir = opt;
 		else
 		{
-#ifndef WIN32
+#if defined(EMSCRIPTEN)
+			dir = "/";
+#elif !defined(WIN32)
 			struct passwd *pw;
 			uid_t		user_id = geteuid();
 

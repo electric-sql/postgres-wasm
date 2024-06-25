@@ -82,6 +82,10 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 /* ----------------
  *		global variables
  * ----------------
@@ -207,6 +211,14 @@ static void log_disconnections(int code, Datum arg);
 static void enable_statement_timeout(void);
 static void disable_statement_timeout(void);
 
+/* ----------------------------------------------------------------
+ *		decls for PGlite routines
+ * ----------------------------------------------------------------
+ */
+static void PostgresMain_Part0(void);
+static void PostgresMain_Part1(void);
+static void PostgresMain_Part2(void);
+extern void ExecProtocolMsg(char *query);
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
@@ -3468,6 +3480,8 @@ restore_stack_base(pg_stack_base_t base)
 void
 check_stack_depth(void)
 {
+	return;
+
 	if (stack_is_too_deep())
 	{
 		ereport(ERROR,
@@ -3689,6 +3703,10 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 		{
 			argv++;
 			argc--;
+#ifdef EMSCRIPTEN
+			/* We want to send output to the client using the wire protocol */
+			whereToSendOutput = DestRemote;
+#endif
 		}
 	}
 	else
@@ -3916,6 +3934,58 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 
 
 /* ----------------------------------------------------------------
+ * ExecProtocolMsg
+ *	   PGlite main execute protocol message
+ * ----------------------------------------------------------------
+ */
+
+int			firstchar;
+StringInfoData input_message;
+sigjmp_buf	local_sigjmp_buf;
+volatile bool send_ready_for_query = true;
+bool		idle_in_transaction_timeout_enabled = false;
+bool		idle_session_timeout_enabled = false;
+
+extern void
+ExecProtocolMsg(char *query)
+{	
+	char qtype = *query; // First byte is qtype
+
+    int32 msgLen = *((int32 *)(query + 1)); // Next 4 bytes are message length
+	msgLen = pg_ntoh32(msgLen);
+    int dataLen = msgLen - 4; // The rest of the message is the data
+
+	resetStringInfo(&input_message);
+	if (dataLen > 0)
+    {
+		// Append the data to the buffer
+        appendBinaryStringInfo(&input_message, query + 5, dataLen);
+    }
+	
+	firstchar = qtype;
+	free(query);
+
+	/* Setup error handling */
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		PostgresMain_Part0();
+
+		/* We can now handle ereport(ERROR) */
+		PG_exception_stack = &local_sigjmp_buf;
+
+		if (!ignore_till_sync)
+			send_ready_for_query = true;	/* initially, or after error */
+
+		return; // Return to the caller
+	}
+	
+	/* Process the query */
+	PostgresMain_Part2();
+	PostgresMain_Part1();
+}
+
+
+/* ----------------------------------------------------------------
  * PostgresMain
  *	   postgres main loop -- all backends, interactive or otherwise start here
  *
@@ -3924,20 +3994,20 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
  * dbname is the name of the database to connect to, or NULL if the database
  * name should be extracted from the command line arguments or defaulted.
  * username is the PostgreSQL user name to be used for the session.
+ * 
+ * Mods:
+ * 
+ * This has been modified to be called from PGlite and exits early once 
+ * initialisation is complete.
+ * ExecProtocolMsg above is called to process the query.
  * ----------------------------------------------------------------
  */
+
 void
 PostgresMain(int argc, char *argv[],
 			 const char *dbname,
 			 const char *username)
 {
-	int			firstchar;
-	StringInfoData input_message;
-	sigjmp_buf	local_sigjmp_buf;
-	volatile bool send_ready_for_query = true;
-	bool		idle_in_transaction_timeout_enabled = false;
-	bool		idle_session_timeout_enabled = false;
-
 	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
 		InitStandaloneProcess(argv[0]);
@@ -4186,9 +4256,27 @@ PostgresMain(int argc, char *argv[],
 	 * unblock in AbortTransaction() because the latter is only called if we
 	 * were inside a transaction.
 	 */
-
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
+		PostgresMain_Part0();
+	}
+
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
+	if (!ignore_till_sync)
+		send_ready_for_query = true;	/* initially, or after error */
+
+	/*
+	 * Non-error queries loop here.
+	 */
+	PostgresMain_Part1();
+	exit(0);
+}
+
+void
+PostgresMain_Part0()
+{
 		/*
 		 * NOTE: if you are tempted to add more code in this if-block,
 		 * consider the high probability that it should be in
@@ -4291,20 +4379,11 @@ PostgresMain(int argc, char *argv[],
 
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
-	}
+}
 
-	/* We can now handle ereport(ERROR) */
-	PG_exception_stack = &local_sigjmp_buf;
-
-	if (!ignore_till_sync)
-		send_ready_for_query = true;	/* initially, or after error */
-
-	/*
-	 * Non-error queries loop here.
-	 */
-
-	for (;;)
-	{
+void
+PostgresMain_Part1()
+{
 		/*
 		 * At top of loop, reset extended-query-message flag, so that any
 		 * errors encountered in "idle" state don't provoke skip.
@@ -4411,12 +4490,12 @@ PostgresMain(int argc, char *argv[],
 		 * STDIN doing the same thing.)
 		 */
 		DoingCommandRead = true;
+}
 
-		/*
-		 * (3) read a command (loop blocks here)
-		 */
-		firstchar = ReadCommand(&input_message);
 
+void
+PostgresMain_Part2()
+{
 		/*
 		 * (4) turn off the idle-in-transaction and idle-session timeouts, if
 		 * active.  We do this before step (5) so that any last-moment timeout
@@ -4463,7 +4542,7 @@ PostgresMain(int argc, char *argv[],
 		 * Sync.
 		 */
 		if (ignore_till_sync && firstchar != EOF)
-			continue;
+			return;
 
 		switch (firstchar)
 		{
@@ -4716,7 +4795,6 @@ PostgresMain(int argc, char *argv[],
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
-	}							/* end of input-reading loop */
 }
 
 /*

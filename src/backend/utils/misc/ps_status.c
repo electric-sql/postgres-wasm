@@ -22,7 +22,7 @@
 #include <machine/vmparam.h>	/* for old BSD */
 #include <sys/exec.h>
 #endif
-#if defined(__darwin__)
+#if defined(__darwin__) && !defined(EMSCRIPTEN)
 #include <crt_externs.h>
 #endif
 
@@ -230,7 +230,7 @@ save_ps_display_args(int argc, char **argv)
 		}
 		new_argv[argc] = NULL;
 
-#if defined(__darwin__)
+#if defined(__darwin__) && !defined(EMSCRIPTEN)
 
 		/*
 		 * macOS (and perhaps other NeXT-derived platforms?) has a static copy

@@ -346,6 +346,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 	}
 
+	checkDataDir();
+	ChangeToDataDir();
+
 	/*
 	 * Validate we have been given a reasonable-looking DataDir and change
 	 * into it (if under postmaster, should be done already).
@@ -501,6 +504,25 @@ BootstrapModeMain(void)
 	Assert(!IsUnderPostmaster);
 	Assert(IsBootstrapProcessingMode());
 
+	printf("NAMEDATALEN = %d\n", NAMEDATALEN);
+	printf("SIZEOF_POINTER = %d\n", (int) sizeof(Pointer));
+	printf("ALIGNOF_POINTER = %s\n", (sizeof(Pointer) == 4) ? "i" : "d");
+	printf("FLOAT8PASSBYVAL = %s\n", FLOAT8PASSBYVAL ? "true" : "false");
+	// Results on wasm:
+	//		NAMEDATALEN = 64
+	//		SIZEOF_POINTER = 4
+	//		ALIGNOF_POINTER = i
+	//		FLOAT8PASSBYVAL = false
+	// Trying to use following for other bki substitutions:
+	//		POSTGRES = 'postgres'
+	//		ENCODING = 6 // PG_UTF8
+	//		LC_COLLATE = 'C'
+	//		LC_CTYPE = 'en_US.UTF-8'
+	//
+
+	// manually substituted and embedded during build:
+	FILE *in = fopen("/usr/local/pgsql/share/postgres_wasm.bki","r");
+
 	/*
 	 * To ensure that src/common/link-canary.c is linked into the backend, we
 	 * must call it from somewhere.  Here is as good as anywhere.
@@ -526,6 +548,8 @@ BootstrapModeMain(void)
 	 * Process bootstrap input.
 	 */
 	StartTransactionCommand();
+
+	boot_yyset_in(in);
 	boot_yyparse();
 	CommitTransactionCommand();
 
