@@ -53,6 +53,10 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 /*
  * No more than this many tuples per CopyMultiInsertBuffer
  *
@@ -1170,6 +1174,20 @@ CopyFrom(CopyFromState cstate)
 }
 
 /*
+ * Call the JS function that implements the COPY FROM to command.
+ */
+#ifdef EMSCRIPTEN
+EM_JS(char*, emscripten_copy_from, (char *filename, bool is_program), {
+	const res = Module.copyFrom(UTF8ToString(filename), is_program);
+	if (res === null || res === undefined) {
+		return null;
+	} else {
+		return stringToNewUTF8(res);
+	}
+});
+#endif
+
+/*
  * Setup to read tuples from a file for COPY FROM.
  *
  * 'rel': Used as a template for the tuples
@@ -1489,6 +1507,40 @@ BeginCopyFrom(ParseState *pstate,
 	else
 	{
 		cstate->filename = pstrdup(filename);
+
+		#ifdef EMSCRIPTEN
+		if (cstate->is_program)
+		{
+			/* JS implimentation of COPY FROM PROGRAM
+			 * Execute js runction Module.copyFrom, it run a function that implements
+			 * COPY FROM PROGRAM and make data availible at /dev/blob
+			 */
+			char* err_msg = emscripten_copy_from(cstate->filename, true);
+			if (err_msg != NULL)
+				ereport(ERROR,
+						(NULL,
+						 errmsg("could not execute command \"%s\": %s",
+								cstate->filename, err_msg)));
+			cstate->is_program = false;
+			cstate->filename = "/dev/blob";
+		}
+		else if (strncmp(cstate->filename, "http://", 7) == 0 ||
+				 strncmp(cstate->filename, "https://", 8) == 0 ||
+				 strncmp(cstate->filename, "blob:", 5) == 0)
+		{
+			/* JS implimentation of COPY FROM with a url path
+			 * a http prefix will do a synchronous GET request to the url
+			 * a blob prefix will fet the file from the query blobs option
+			 */
+			char* err_msg = emscripten_copy_from(cstate->filename, false);
+			if (err_msg != NULL)
+				ereport(ERROR,
+						(NULL,
+						 errmsg("could not COPY FROM \"%s\": %s",
+								cstate->filename, err_msg)));
+			cstate->filename = "/dev/blob";
+		}
+		#endif
 
 		if (cstate->is_program)
 		{

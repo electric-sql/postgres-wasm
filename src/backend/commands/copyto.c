@@ -43,6 +43,10 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 /*
  * Represents the different dest cases we need to worry about at
  * the bottom level
@@ -311,6 +315,20 @@ ClosePipeToProgram(CopyToState cstate)
 }
 
 /*
+ * Call the JS function that finalizes the COPY TO command.
+ */
+#ifdef EMSCRIPTEN
+EM_JS(char*, emscripten_copy_to_end, (), {
+	const res = Module.copyToEnd();
+	if (res === null || res === undefined) {
+		return null;
+	} else {
+		return stringToNewUTF8(res);
+	}
+});
+#endif
+
+/*
  * Release resources allocated in a cstate for COPY TO/FROM.
  */
 static void
@@ -329,11 +347,37 @@ EndCopy(CopyToState cstate)
 							cstate->filename)));
 	}
 
+	#ifdef EMSCRIPTEN
+	if (strcmp(cstate->filename, "/dev/blob") == 0)
+	{
+		/* Finalize the COPY TO command */
+		char* err_msg = emscripten_copy_to_end();
+		if (err_msg != NULL)
+			ereport(ERROR,
+					(NULL,
+					 errmsg("could not complete COPY TO: %s", err_msg)));
+	}
+	#endif
+
 	pgstat_progress_end_command();
 
 	MemoryContextDelete(cstate->copycontext);
 	pfree(cstate);
 }
+
+/*
+ * Call the JS function that implements the COPY TO command.
+ */
+#ifdef EMSCRIPTEN
+EM_JS(char*, emscripten_copy_to, (char *filename, bool is_program), {
+	const res = Module.copyTo(UTF8ToString(filename), is_program);
+	if (res === null || res === undefined) {
+		return null;
+	} else {
+		return stringToNewUTF8(res);
+	}
+});
+#endif
 
 /*
  * Setup CopyToState to read tuples from a table or a query for COPY TO.
@@ -672,6 +716,40 @@ BeginCopyTo(ParseState *pstate,
 		cstate->filename = pstrdup(filename);
 		cstate->is_program = is_program;
 
+		#ifdef EMSCRIPTEN
+		if (cstate->is_program)
+		{
+			/* JS implimentation of COPY TO PROGRAM
+			 * Execute js runction Module.copyFrom, it run a function that implements
+			 * COPY FROM PROGRAM and make data availible at /dev/blob
+			 */
+			char* err_msg = emscripten_copy_to(cstate->filename, true);
+			if (err_msg != NULL)
+				ereport(ERROR,
+						(NULL,
+						 errmsg("could not execute command \"%s\": %s",
+								cstate->filename, err_msg)));
+			cstate->is_program = false;
+			cstate->filename = "/dev/blob";
+		}
+		else if (strncmp(cstate->filename, "http://", 7) == 0 ||
+				 strncmp(cstate->filename, "https://", 8) == 0 ||
+				 strncmp(cstate->filename, "blob:", 5) == 0)
+		{
+			/* JS implimentation of COPY FROM with a url path
+			 * a http prefix will do a synchronous GET request to the url
+			 * a blob prefix will fet the file from the query blobs option
+			 */
+			char* err_msg = emscripten_copy_to(cstate->filename, false);
+			if (err_msg != NULL)
+				ereport(ERROR,
+						(NULL,
+						 errmsg("could not COPY TO \"%s\": %s",
+								cstate->filename, err_msg)));
+			cstate->filename = "/dev/blob";
+		}
+		#endif
+
 		if (is_program)
 		{
 			progress_vals[1] = PROGRESS_COPY_TYPE_PROGRAM;
@@ -693,7 +771,7 @@ BeginCopyTo(ParseState *pstate,
 			 * Prevent write to relative path ... too easy to shoot oneself in
 			 * the foot by overwriting a database file ...
 			 */
-			if (!is_absolute_path(filename))
+			if (!is_absolute_path(cstate->filename))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
 						 errmsg("relative path not allowed for COPY to file")));
