@@ -620,7 +620,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	{
 		if (!ShutdownRequestPending)
 			do_start_worker();
-		proc_exit(0);			/* done */
+		pg_proc_exit(0);			/* done */
 	}
 
 	AutoVacuumShmem->av_launcherpid = MyProcPid;
@@ -851,7 +851,7 @@ AutoVacLauncherShutdown(void)
 			(errmsg_internal("autovacuum launcher shutting down")));
 	AutoVacuumShmem->av_launcherpid = 0;
 
-	proc_exit(0);				/* done */
+	pg_proc_exit(0);				/* done */
 }
 
 /*
@@ -1589,7 +1589,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		 * callback was registered to do ProcKill, which will clean up
 		 * necessary state.
 		 */
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	/* We can now handle ereport(ERROR) */
@@ -1721,7 +1721,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 */
 
 	/* All done, go away */
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*

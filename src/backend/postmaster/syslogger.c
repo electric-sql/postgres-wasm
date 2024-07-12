@@ -528,7 +528,7 @@ SysLoggerMain(int argc, char *argv[])
 			 * inside proc_exit.  Regular exit() will take care of flushing
 			 * and closing stdio channels.
 			 */
-			proc_exit(0);
+			pg_proc_exit(0);
 		}
 	}
 }

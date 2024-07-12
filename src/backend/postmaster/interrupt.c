@@ -42,7 +42,7 @@ HandleMainLoopInterrupts(void)
 	}
 
 	if (ShutdownRequestPending)
-		proc_exit(0);
+		pg_proc_exit(0);
 }
 
 /*
@@ -72,7 +72,7 @@ void
 SignalHandlerForCrashExit(SIGNAL_ARGS)
 {
 	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
+	 * We DO NOT want to run pg_proc_exit() or atexit() callbacks -- we're here
 	 * because shared memory may be corrupted, so we don't want to try to
 	 * clean up our transaction.  Just nail the windows shut and get out of
 	 * town.  The callbacks wouldn't be safe to run from a signal handler,

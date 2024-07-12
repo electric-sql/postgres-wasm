@@ -825,7 +825,7 @@ StartBackgroundWorker(void)
 		 */
 
 		/* and go away */
-		proc_exit(1);
+		pg_proc_exit(1);
 	}
 
 	/* We can now handle ereport(ERROR) */
@@ -875,7 +875,7 @@ StartBackgroundWorker(void)
 	entrypt(worker->bgw_main_arg);
 
 	/* ... and if it returns, we're done */
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*

@@ -304,6 +304,6 @@ HandleWalWriterInterrupts(void)
 		 */
 		pgstat_send_wal(true);
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 }

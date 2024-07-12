@@ -254,7 +254,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * We treat hard shell errors such as "command not found" as fatal, too.
 	 */
 	if (wait_result_is_signal(rc, SIGTERM))
-		proc_exit(1);
+		pg_proc_exit(1);
 
 	ereport(wait_result_is_any_signal(rc, true) ? FATAL : DEBUG2,
 			(errmsg("could not restore file \"%s\" from archive: %s",

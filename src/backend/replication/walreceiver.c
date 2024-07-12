@@ -209,7 +209,7 @@ WalReceiverMain(void)
 		case WALRCV_STOPPED:
 			SpinLockRelease(&walrcv->mutex);
 			ConditionVariableBroadcast(&walrcv->walRcvStoppedCV);
-			proc_exit(1);
+			pg_proc_exit(1);
 			break;
 
 		case WALRCV_STARTING:
@@ -647,7 +647,7 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 	{
 		SpinLockRelease(&walrcv->mutex);
 		if (state == WALRCV_STOPPING)
-			proc_exit(0);
+			pg_proc_exit(0);
 		else
 			elog(FATAL, "unexpected walreceiver state");
 	}

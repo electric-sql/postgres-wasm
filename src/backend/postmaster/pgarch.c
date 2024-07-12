@@ -200,7 +200,7 @@ PgArchiverMain(void)
 
 	pgarch_MainLoop();
 
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*

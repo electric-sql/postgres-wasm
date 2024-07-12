@@ -115,7 +115,7 @@ InitPostmasterChild(void)
 	_setmode(fileno(stderr), _O_BINARY);
 #endif
 
-	/* We don't want the postmaster's proc_exit() handlers */
+	/* We don't want the postmaster's pg_proc_exit() handlers */
 	on_exit_reset();
 
 	/* In EXEC_BACKEND case we will not have inherited BlockSig etc values */
@@ -951,7 +951,7 @@ UnlinkLockFiles(int status, Datum arg)
 	 * of a postmaster or standalone backend, while we won't come here at all
 	 * when exiting postmaster child processes.  Therefore, this is a good
 	 * place to log completion of shutdown.  We could alternatively teach
-	 * proc_exit() to do it, but that seems uglier.  In a standalone backend,
+	 * pg_proc_exit() to do it, but that seems uglier.  In a standalone backend,
 	 * use NOTICE elevel to be less chatty.
 	 */
 	ereport(IsPostmasterEnvironment ? LOG : NOTICE,

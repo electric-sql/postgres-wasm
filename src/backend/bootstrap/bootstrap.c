@@ -302,7 +302,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			default:
 				write_stderr("Try \"%s --help\" for more information.\n",
 							 progname);
-				proc_exit(1);
+				pg_proc_exit(1);
 				break;
 		}
 	}
@@ -310,7 +310,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	if (argc != optind)
 	{
 		write_stderr("%s: invalid command-line arguments\n", progname);
-		proc_exit(1);
+		pg_proc_exit(1);
 	}
 
 	switch (MyAuxProcType)
@@ -343,7 +343,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		if (!SelectConfigFiles(userDoption, progname))
-			proc_exit(1);
+			pg_proc_exit(1);
 	}
 
 	checkDataDir();
@@ -431,7 +431,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		case CheckerProcess:
 			/* don't set signals, they're useless here */
 			CheckerModeMain();
-			proc_exit(1);		/* should never return */
+			pg_proc_exit(1);		/* should never return */
 
 		case BootstrapProcess:
 
@@ -444,36 +444,36 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			bootstrap_signals();
 			BootStrapXLOG();
 			BootstrapModeMain();
-			proc_exit(1);		/* should never return */
+			pg_proc_exit(1);		/* should never return */
 
 		case StartupProcess:
 			StartupProcessMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		case ArchiverProcess:
 			PgArchiverMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		case BgWriterProcess:
 			BackgroundWriterMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		case CheckpointerProcess:
 			CheckpointerMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		case WalWriterProcess:
 			InitXLOGAccess();
 			WalWriterMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		case WalReceiverProcess:
 			WalReceiverMain();
-			proc_exit(1);
+			pg_proc_exit(1);
 
 		default:
 			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
-			proc_exit(1);
+			pg_proc_exit(1);
 	}
 }
 
@@ -486,7 +486,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 static void
 CheckerModeMain(void)
 {
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*
@@ -561,7 +561,7 @@ BootstrapModeMain(void)
 
 	/* Clean up and exit */
 	cleanup();
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 

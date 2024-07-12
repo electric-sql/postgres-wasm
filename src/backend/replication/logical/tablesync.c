@@ -150,7 +150,7 @@ finish_sync_worker(void)
 	logicalrep_worker_wakeup(MyLogicalRepWorker->subid, InvalidOid);
 
 	/* Stop gracefully */
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*

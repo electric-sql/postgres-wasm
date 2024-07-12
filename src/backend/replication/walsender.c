@@ -318,7 +318,7 @@ WalSndErrorCleanup(void)
 		WalSndResourceCleanup(false);
 
 	if (got_STOPPING || got_SIGUSR2)
-		proc_exit(0);
+		pg_proc_exit(0);
 
 	/* Revert back to startup state */
 	WalSndSetState(WALSNDSTATE_STARTUP);
@@ -365,7 +365,7 @@ WalSndShutdown(void)
 	if (whereToSendOutput == DestRemote)
 		whereToSendOutput = DestNone;
 
-	proc_exit(0);
+	pg_proc_exit(0);
 	abort();					/* keep the compiler quiet */
 }
 
@@ -739,7 +739,7 @@ StartReplication(StartReplicationCmd *cmd)
 
 		replication_active = false;
 		if (got_STOPPING)
-			proc_exit(0);
+			pg_proc_exit(0);
 		WalSndSetState(WALSNDSTATE_STARTUP);
 
 		Assert(streamingDoneSending && streamingDoneReceiving);
@@ -1218,7 +1218,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	replication_active = false;
 	if (got_STOPPING)
-		proc_exit(0);
+		pg_proc_exit(0);
 	WalSndSetState(WALSNDSTATE_STARTUP);
 
 	/* Get out of COPY mode (CommandComplete). */
@@ -1732,7 +1732,7 @@ ProcessRepliesIfAny(void)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("unexpected EOF on standby connection")));
-			proc_exit(0);
+			pg_proc_exit(0);
 		}
 		if (r == 0)
 		{
@@ -1767,7 +1767,7 @@ ProcessRepliesIfAny(void)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("unexpected EOF on standby connection")));
-			proc_exit(0);
+			pg_proc_exit(0);
 		}
 
 		/* ... and process it */
@@ -1800,7 +1800,7 @@ ProcessRepliesIfAny(void)
 				 * 'X' means that the standby is closing down the socket.
 				 */
 			case 'X':
-				proc_exit(0);
+				pg_proc_exit(0);
 
 			default:
 				Assert(false);	/* NOT REACHED */
@@ -1844,7 +1844,7 @@ ProcessStandbyMessage(void)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("unexpected message type \"%c\"", msgtype)));
-			proc_exit(0);
+			pg_proc_exit(0);
 	}
 }
 
@@ -2952,7 +2952,7 @@ WalSndDone(WalSndSendDataCallback send_data)
 		EndCommand(&qc, DestRemote, false);
 		pq_flush();
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 	if (!waiting_for_ping_response)
 		WalSndKeepalive(true);
@@ -3152,7 +3152,7 @@ WalSndWait(uint32 socket_events, long timeout, uint32 wait_event)
 	ModifyWaitEvent(FeBeWaitSet, FeBeWaitSetSocketPos, socket_events, NULL);
 	if (WaitEventSetWait(FeBeWaitSet, timeout, &event, 1, wait_event) == 1 &&
 		(event.events & WL_POSTMASTER_DEATH))
-		proc_exit(1);
+		pg_proc_exit(1);
 }
 
 /*

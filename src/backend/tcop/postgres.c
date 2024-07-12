@@ -2903,7 +2903,7 @@ quickdie(SIGNAL_ARGS)
 	}
 
 	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
+	 * We DO NOT want to run pg_proc_exit() or atexit() callbacks -- we're here
 	 * because shared memory may be corrupted, so we don't want to try to
 	 * clean up our transaction.  Just nail the windows shut and get out of
 	 * town.  The callbacks wouldn't be safe to run from a signal handler,
@@ -3174,7 +3174,7 @@ ProcessInterrupts(void)
 			 * The logical replication launcher can be stopped at any time.
 			 * Use exit status 1 so the background worker is restarted.
 			 */
-			proc_exit(1);
+			pg_proc_exit(1);
 		}
 		else if (RecoveryConflictPending && RecoveryConflictRetryable)
 		{
@@ -4040,7 +4040,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		if (!SelectConfigFiles(userDoption, progname))
-			proc_exit(1);
+			pg_proc_exit(1);
 	}
 
 	/*
@@ -4776,7 +4776,7 @@ PostgresMain_Part2()
 				 * it will fail to be called during other backend-shutdown
 				 * scenarios.
 				 */
-				proc_exit(0);
+				pg_proc_exit(0);
 
 			case 'd':			/* copy data */
 			case 'c':			/* copy done */

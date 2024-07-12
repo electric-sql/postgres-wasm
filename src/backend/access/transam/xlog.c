@@ -7590,7 +7590,7 @@ StartupXLOG(void)
 						 * of postmaster.  Log messages issued from
 						 * postmaster.
 						 */
-						proc_exit(3);
+						pg_proc_exit(3);
 
 					case RECOVERY_TARGET_ACTION_PAUSE:
 						SetRecoveryPause(true);

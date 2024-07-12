@@ -126,7 +126,7 @@ test_shm_mq_main(Datum main_arg)
 	if (registrant == NULL)
 	{
 		elog(DEBUG1, "registrant backend has exited prematurely");
-		proc_exit(1);
+		pg_proc_exit(1);
 	}
 	SetLatch(&registrant->procLatch);
 
@@ -138,7 +138,7 @@ test_shm_mq_main(Datum main_arg)
 	 * segment (that would happen anyway during process exit, though).
 	 */
 	dsm_detach(seg);
-	proc_exit(1);
+	pg_proc_exit(1);
 }
 
 /*

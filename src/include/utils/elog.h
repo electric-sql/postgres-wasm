@@ -296,7 +296,7 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * not before popping the error stack.
  *
  * Note: an ereport(FATAL) will not be caught by this construct; control will
- * exit straight through proc_exit().  Therefore, do NOT put any cleanup
+ * exit straight through pg_proc_exit().  Therefore, do NOT put any cleanup
  * of non-process-local resources into the error recovery section, at least
  * not without taking thought for what will happen during ereport(FATAL).
  * The PG_ENSURE_ERROR_CLEANUP macros provided by storage/ipc.h may be

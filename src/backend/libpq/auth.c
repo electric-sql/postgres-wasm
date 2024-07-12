@@ -264,7 +264,7 @@ auth_failed(Port *port, int status, char *logdetail)
 	 * events.)
 	 */
 	if (status == STATUS_EOF)
-		proc_exit(0);
+		pg_proc_exit(0);
 
 	switch (port->hba->auth_method)
 	{

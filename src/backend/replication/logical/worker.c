@@ -2519,7 +2519,7 @@ maybe_reread_subscription(void)
 						"stop because the subscription was removed",
 						MySubscription->name)));
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	/*
@@ -2533,7 +2533,7 @@ maybe_reread_subscription(void)
 						"stop because the subscription was disabled",
 						MySubscription->name)));
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	/* !slotname should never happen when enabled is true. */
@@ -2554,7 +2554,7 @@ maybe_reread_subscription(void)
 				(errmsg("logical replication apply worker for subscription \"%s\" will restart because of a parameter change",
 						MySubscription->name)));
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	/* Check for other changes that should never happen too. */
@@ -3100,7 +3100,7 @@ ApplyWorkerMain(Datum main_arg)
 				(errmsg("logical replication apply worker for subscription %u will not "
 						"start because the subscription was removed during startup",
 						MyLogicalRepWorker->subid)));
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	MySubscriptionValid = true;
@@ -3113,7 +3113,7 @@ ApplyWorkerMain(Datum main_arg)
 						"start because the subscription was disabled during startup",
 						MySubscription->name)));
 
-		proc_exit(0);
+		pg_proc_exit(0);
 	}
 
 	/* Setup synchronous commit according to the user's wishes */
@@ -3221,7 +3221,7 @@ ApplyWorkerMain(Datum main_arg)
 	/* Run the main loop. */
 	LogicalRepApplyLoop(origin_startpos);
 
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 /*

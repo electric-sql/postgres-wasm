@@ -33,7 +33,7 @@
 
 
 /*
- * This flag is set during proc_exit() to change ereport()'s behavior,
+ * This flag is set during pg_proc_exit() to change ereport()'s behavior,
  * so that an ereport() from an on_proc_exit routine cannot get us out
  * of the exit procedure.  We do NOT want to go back to the idle loop...
  */
@@ -101,7 +101,7 @@ static int	on_proc_exit_index,
  * ----------------------------------------------------------------
  */
 void
-proc_exit(int code)
+pg_proc_exit(int code)
 {
 	/* Clean up everything that must be cleaned up */
 	proc_exit_prepare(code);
@@ -193,7 +193,7 @@ proc_exit_prepare(int code)
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
-	elog(DEBUG3, "proc_exit(%d): %d callbacks to make",
+	elog(DEBUG3, "pg_proc_exit(%d): %d callbacks to make",
 		 code, on_proc_exit_index);
 
 	/*
@@ -215,7 +215,7 @@ proc_exit_prepare(int code)
 /* ------------------
  * Run all of the on_shmem_exit routines --- but don't actually exit.
  * This is used by the postmaster to re-initialize shared memory and
- * semaphores after a backend dies horribly.  As with proc_exit(), we
+ * semaphores after a backend dies horribly.  As with pg_proc_exit(), we
  * remove each callback from the list before calling it, to avoid
  * infinite loop in case of error.
  * ------------------
@@ -298,7 +298,7 @@ atexit_callback(void)
  *		on_proc_exit
  *
  *		this function adds a callback function to the list of
- *		functions invoked by proc_exit().   -cim 2/6/90
+ *		functions invoked by pg_proc_exit().   -cim 2/6/90
  * ----------------------------------------------------------------
  */
 void

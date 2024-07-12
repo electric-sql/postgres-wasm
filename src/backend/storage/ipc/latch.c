@@ -1520,7 +1520,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			if (!PostmasterIsAliveInternal())
 			{
 				if (set->exit_on_postmaster_death)
-					proc_exit(1);
+					pg_proc_exit(1);
 				occurred_events->fd = PGINVALID_SOCKET;
 				occurred_events->events = WL_POSTMASTER_DEATH;
 				occurred_events++;
@@ -1593,7 +1593,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 	if (unlikely(set->report_postmaster_not_running))
 	{
 		if (set->exit_on_postmaster_death)
-			proc_exit(1);
+			pg_proc_exit(1);
 		occurred_events->fd = PGINVALID_SOCKET;
 		occurred_events->events = WL_POSTMASTER_DEATH;
 		return 1;
@@ -1664,7 +1664,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			set->report_postmaster_not_running = true;
 
 			if (set->exit_on_postmaster_death)
-				proc_exit(1);
+				pg_proc_exit(1);
 			occurred_events->fd = PGINVALID_SOCKET;
 			occurred_events->events = WL_POSTMASTER_DEATH;
 			occurred_events++;
@@ -1784,7 +1784,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 			if (!PostmasterIsAliveInternal())
 			{
 				if (set->exit_on_postmaster_death)
-					proc_exit(1);
+					pg_proc_exit(1);
 				occurred_events->fd = PGINVALID_SOCKET;
 				occurred_events->events = WL_POSTMASTER_DEATH;
 				occurred_events++;
@@ -1950,7 +1950,7 @@ WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 		if (!PostmasterIsAliveInternal())
 		{
 			if (set->exit_on_postmaster_death)
-				proc_exit(1);
+				pg_proc_exit(1);
 			occurred_events->fd = PGINVALID_SOCKET;
 			occurred_events->events = WL_POSTMASTER_DEATH;
 			occurred_events++;

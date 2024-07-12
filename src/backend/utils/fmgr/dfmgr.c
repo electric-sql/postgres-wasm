@@ -264,11 +264,11 @@ internal_load_library(const char *libname)
 		/*
 		 * Check for same files - different paths (ie, symlink or link)
 		 */
-		if (stat(libname, &stat_buf) == -1)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not access file \"%s\": %m",
-							libname)));
+		// if (stat(libname, &stat_buf) == -1)
+		// 	ereport(ERROR,
+		// 			(errcode_for_file_access(),
+		// 			 errmsg("could not access file \"%s\": %m",
+		// 					libname)));
 
 		for (file_scanner = file_list;
 			 file_scanner != NULL &&

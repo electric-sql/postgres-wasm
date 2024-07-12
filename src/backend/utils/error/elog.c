@@ -663,7 +663,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * FATAL termination.  The postmaster may or may not consider this
 		 * worthy of panic, depending on which subprocess returns it.
 		 */
-		proc_exit(1);
+		pg_proc_exit(1);
 	}
 
 	if (elevel >= PANIC)

@@ -586,7 +586,7 @@ HandleCheckpointerInterrupts(void)
 		pgstat_send_wal(true);
 
 		/* Normal exit from the checkpointer is here */
-		proc_exit(0);			/* done */
+		pg_proc_exit(0);			/* done */
 	}
 }
 

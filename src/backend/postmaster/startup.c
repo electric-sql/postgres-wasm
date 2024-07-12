@@ -102,7 +102,7 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	if (in_restore_command)
-		proc_exit(1);
+		pg_proc_exit(1);
 	else
 		shutdown_requested = true;
 	WakeupRecovery();
@@ -165,7 +165,7 @@ HandleStartupProcInterrupts(void)
 	 * Check if we were requested to exit without finishing recovery.
 	 */
 	if (shutdown_requested)
-		proc_exit(1);
+		pg_proc_exit(1);
 
 	/*
 	 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -247,7 +247,7 @@ StartupProcessMain(void)
 	 * Exit normally. Exit code 0 tells postmaster that we completed recovery
 	 * successfully.
 	 */
-	proc_exit(0);
+	pg_proc_exit(0);
 }
 
 void
@@ -261,7 +261,7 @@ PreRestoreCommand(void)
 	 */
 	in_restore_command = true;
 	if (shutdown_requested)
-		proc_exit(1);
+		pg_proc_exit(1);
 }
 
 void

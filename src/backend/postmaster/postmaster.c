@@ -4462,7 +4462,7 @@ BackendInitialize(Port *port)
 	 * already did any appropriate error reporting.
 	 */
 	if (status != STATUS_OK)
-		proc_exit(0);
+		pg_proc_exit(0);
 
 	/*
 	 * Now that we have the user and database name, we can set the process
@@ -5132,7 +5132,7 @@ ExitPostmaster(int status)
 	 * MUST		-- vadim 05-10-1999
 	 */
 
-	proc_exit(status);
+	pg_proc_exit(status);
 }
 
 /*
@@ -5316,7 +5316,7 @@ sigusr1_handler(SIGNAL_ARGS)
 /*
  * SIGTERM while processing startup packet.
  *
- * Running proc_exit() from a signal handler would be quite unsafe.
+ * Running pg_proc_exit() from a signal handler would be quite unsafe.
  * However, since we have not yet touched shared memory, we can just
  * pull the plug and exit without running any atexit handlers.
  *
